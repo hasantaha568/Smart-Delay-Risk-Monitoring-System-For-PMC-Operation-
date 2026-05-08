@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Delay Risk Analysis Dashboard | Perfect Engineers & Resources Pvt. Ltd.</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161d;
+    --surface2: #1a1e28;
+    --border: #252a38;
+    --accent: #f5a623;
+    --accent2: #e8593a;
+    --green: #27c98f;
+    --red: #e8593a;
+    --yellow: #f5a623;
+    --blue: #4a9eff;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --card-radius: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .logo-badge {
+    background: var(--accent);
+    color: #000;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    letter-spacing: 1px;
+  }
+  .company-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 2px;
+    color: var(--text);
+  }
+  .header-right {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .live-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    background: var(--green);
+    border-radius: 50%;
+    margin-right: 6px;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity:1; }
+    50% { opacity:0.3; }
+  }
+
+  /* NAV TABS */
+  .nav-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 16px 32px 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .tab-btn {
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    margin-bottom: -1px;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* MAIN LAYOUT */
+  .main { padding: 28px 32px; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* KPI CARDS */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .kpi-card:hover { border-color: var(--accent); }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .kpi-card.red::before { background: var(--red); }
+  .kpi-card.yellow::before { background: var(--yellow); }
+  .kpi-card.green::before { background: var(--green); }
+  .kpi-card.blue::before { background: var(--blue); }
+  .kpi-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+  .kpi-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .kpi-value.red { color: var(--red); }
+  .kpi-value.yellow { color: var(--yellow); }
+  .kpi-value.green { color: var(--green); }
+  .kpi-value.blue { color: var(--blue); }
+  .kpi-sub { font-size: 11px; color: var(--muted); }
+
+  /* CHARTS GRID */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 20px;
+  }
+  .chart-card.full { grid-column: 1 / -1; }
+  .chart-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .chart-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  canvas { max-height: 260px; }
+
+  /* TABLE */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .table-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .table-header-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .table-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .search-box, .filter-select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 7px 12px;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    outline: none;
+  }
+  .search-box:focus, .filter-select:focus { border-color: var(--accent); }
+  .search-box { width: 200px; }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    background: var(--surface2);
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  thead th:hover { color: var(--accent); }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td { padding: 10px 14px; font-size: 13px; }
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'DM Mono', monospace;
+  }
+  .badge-High { background: rgba(232,89,58,0.15); color: var(--red); border: 1px solid rgba(232,89,58,0.3); }
+  .badge-Medium { background: rgba(245,166,35,0.15); color: var(--yellow); border: 1px solid rgba(245,166,35,0.3); }
+  .badge-Low { background: rgba(39,201,143,0.15); color: var(--green); border: 1px solid rgba(39,201,143,0.3); }
+
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .page-btns { display: flex; gap: 6px; }
+  .page-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.15s;
+  }
+  .page-btn:hover, .page-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+  .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* PREDICTOR */
+  .predictor-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 24px;
+  }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+  .form-group input, .form-group select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+  .predict-btn {
+    width: 100%;
+    margin-top: 20px;
+    padding: 14px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .predict-btn:hover { opacity: 0.85; }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+  }
+  .result-empty { color: var(--muted); text-align: center; }
+  .result-empty .icon { font-size: 48px; margin-bottom: 12px; }
+  .result-risk {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 72px;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .result-risk.High { color: var(--red); }
+  .result-risk.Medium { color: var(--yellow); }
+  .result-risk.Low { color: var(--green); }
+  .result-label { font-size: 13px; color: var(--muted); margin-bottom: 24px; text-align: center; }
+  .result-factors { width: 100%; }
+  .factor-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .factor-bar {
+    height: 6px;
+    border-radius: 3px;
+    flex-grow: 1;
+    margin: 0 12px;
+    background: var(--border);
+    overflow: hidden;
+  }
+  .factor-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+
+  /* REPORT TAB */
+  .report-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  .report-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 20px;
+  }
+  .report-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; color: var(--accent); }
+  .report-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .report-row:last-child { border-bottom: none; }
+  .report-val { font-family: 'DM Mono', monospace; color: var(--blue); }
+  .export-btn {
+    padding: 12px 24px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+    margin-right: 12px;
+  }
+  .export-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+    color: var(--text);
+  }
+  .section-sub { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <div class="logo-badge">PERPL</div>
+    <div class="company-name">Perfect Engineers &amp; Resources Pvt. Ltd.</div>
+  </div>
+  <div class="header-right">
+    <span class="live-dot"></span>
+    Project Delay Risk Analysis Dashboard &nbsp;|&nbsp; 200 Projects Loaded
+  </div>
+</header>
+
+<nav class="nav-tabs">
+  <button class="tab-btn active" onclick="switchTab('overview')">📊 Overview</button>
+  <button class="tab-btn" onclick="switchTab('analysis')">🔍 Analysis</button>
+  <button class="tab-btn" onclick="switchTab('projects')">📋 Projects</button>
+  <button class="tab-btn" onclick="switchTab('predictor')">🤖 Risk Predictor</button>
+  <button class="tab-btn" onclick="switchTab('report')">📄 Report</button>
+</nav>
+
+<main class="main">
+
+<!-- OVERVIEW TAB -->
+<div id="tab-overview" class="tab-panel active">
+  <div style="margin-bottom:20px;">
+    <div class="section-title">Dashboard Overview</div>
+    <div class="section-sub">Real-time project delay risk analysis for all active and historical PMC projects</div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card blue">
+      <div class="kpi-label">Total Projects</div>
+      <div class="kpi-value blue">200</div>
+      <div class="kpi-sub">FY 2024–2025</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">High Risk</div>
+      <div class="kpi-value red">98</div>
+      <div class="kpi-sub">49% of portfolio</div>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="kpi-label">Medium Risk</div>
+      <div class="kpi-value yellow">78</div>
+      <div class="kpi-sub">39% of portfolio</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Low Risk</div>
+      <div class="kpi-value green">24</div>
+      <div class="kpi-sub">12% of portfolio</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Avg Delay</div>
+      <div class="kpi-value red">52.4</div>
+      <div class="kpi-sub">days per project</div>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="kpi-label">Avg Overrun</div>
+      <div class="kpi-value yellow">31.4<span style="font-size:20px">%</span></div>
+      <div class="kpi-sub">budget overrun</div>
+    </div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">Risk Distribution</div>
+      <div class="chart-sub">Breakdown of all 200 projects by delay risk level</div>
+      <canvas id="riskDoughnut"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Delay by Project Type</div>
+      <div class="chart-sub">Average delay days across project categories</div>
+      <canvas id="typeBar"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Delay Distribution</div>
+      <div class="chart-sub">Number of projects by delay duration range</div>
+      <canvas id="delayHist"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Risk by Location</div>
+      <div class="chart-sub">Average delay days by project site city</div>
+      <canvas id="locationBar"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ANALYSIS TAB -->
+<div id="tab-analysis" class="tab-panel">
+  <div style="margin-bottom:20px;">
+    <div class="section-title">Deep Analysis</div>
+    <div class="section-sub">Contractor performance, risk stacking, and factor correlation analysis</div>
+  </div>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">Contractor Performance</div>
+      <div class="chart-sub">Average delay days by contractor</div>
+      <canvas id="contractorBar"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Risk Stack by Project Type</div>
+      <div class="chart-sub">Distribution of risk levels within each project category</div>
+      <canvas id="stackedBar"></canvas>
+    </div>
+    <div class="chart-card full">
+      <div class="chart-title">Key Delay Factor Impact Analysis</div>
+      <div class="chart-sub">Relative contribution of each factor to overall project delays (higher = more impact)</div>
+      <canvas id="factorRadar"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- PROJECTS TAB -->
+<div id="tab-projects" class="tab-panel">
+  <div style="margin-bottom:20px;">
+    <div class="section-title">Project Registry</div>
+    <div class="section-sub">All 200 PMC projects with delay and risk details. Click column headers to sort.</div>
+  </div>
+  <div class="table-wrap">
+    <div class="table-header">
+      <div class="table-header-title">Project List</div>
+      <div class="table-controls">
+        <input class="search-box" id="searchBox" type="text" placeholder="🔍 Search project, type, location...">
+        <select class="filter-select" id="riskFilter" onchange="filterTable()">
+          <option value="">All Risk Levels</option>
+          <option value="High">High Risk</option>
+          <option value="Medium">Medium Risk</option>
+          <option value="Low">Low Risk</option>
+        </select>
+        <select class="filter-select" id="typeFilter" onchange="filterTable()">
+          <option value="">All Types</option>
+          <option>Civil</option>
+          <option>Electrical</option>
+          <option>Infrastructure</option>
+          <option>Mechanical</option>
+          <option>Structural</option>
+        </select>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table id="projectTable">
+        <thead>
+          <tr>
+            <th onclick="sortTable('project_id')">Project ID ↕</th>
+            <th onclick="sortTable('project_type')">Type ↕</th>
+            <th onclick="sortTable('contractor')">Contractor ↕</th>
+            <th onclick="sortTable('location')">Location ↕</th>
+            <th onclick="sortTable('planned_duration_days')">Planned Days ↕</th>
+            <th onclick="sortTable('delay_days')">Delay Days ↕</th>
+            <th onclick="sortTable('overrun_pct')">Overrun % ↕</th>
+            <th onclick="sortTable('contractor_rating')">Rating ↕</th>
+            <th onclick="sortTable('delay_risk')">Risk Level ↕</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <span id="paginationInfo"></span>
+      <div class="page-btns" id="pageBtns"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PREDICTOR TAB -->
+<div id="tab-predictor" class="tab-panel">
+  <div style="margin-bottom:20px;">
+    <div class="section-title">AI Risk Predictor</div>
+    <div class="section-sub">Enter project parameters to predict delay risk level using ML-based scoring</div>
+  </div>
+  <div class="predictor-layout">
+    <div class="form-card">
+      <div style="font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:20px;">Project Parameters</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Project Type</label>
+          <select id="p_type">
+            <option>Civil</option><option>Electrical</option>
+            <option>Infrastructure</option><option>Mechanical</option>
+            <option>Structural</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Contractor Rating (1–5)</label>
+          <input type="number" id="p_rating" min="1" max="5" step="0.1" value="3.5" placeholder="e.g. 3.5">
+        </div>
+        <div class="form-group">
+          <label>No. of Resources</label>
+          <input type="number" id="p_resources" min="1" value="20" placeholder="e.g. 20">
+        </div>
+        <div class="form-group">
+          <label>Planned Duration (Days)</label>
+          <input type="number" id="p_planned" min="1" value="180" placeholder="e.g. 180">
+        </div>
+        <div class="form-group">
+          <label>Site Inspections Done</label>
+          <input type="number" id="p_inspections" min="0" value="8" placeholder="e.g. 8">
+        </div>
+        <div class="form-group">
+          <label>Permit Delays</label>
+          <input type="number" id="p_permit" min="0" value="0" placeholder="e.g. 0 or 1">
+        </div>
+        <div class="form-group">
+          <label>Design Changes</label>
+          <input type="number" id="p_design" min="0" value="0" placeholder="e.g. 0 or 1">
+        </div>
+        <div class="form-group">
+          <label>Weather Issues</label>
+          <select id="p_weather">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Material Shortage</label>
+          <select id="p_material">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+          </select>
+        </div>
+      </div>
+      <button class="predict-btn" onclick="predictRisk()">PREDICT DELAY RISK</button>
+    </div>
+
+    <div class="result-card" id="resultCard">
+      <div class="result-empty">
+        <div class="icon">🎯</div>
+        <div>Fill in project parameters</div>
+        <div style="font-size:12px; margin-top:6px; color:#4b5563;">and click Predict to see the risk assessment</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REPORT TAB -->
+<div id="tab-report" class="tab-panel">
+  <div style="margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+    <div>
+      <div class="section-title">Executive Summary Report</div>
+      <div class="section-sub">Auto-generated MIS report for Perfect Engineers &amp; Resources Pvt. Ltd.</div>
+    </div>
+    <div>
+      <button class="export-btn" onclick="exportCSV()">⬇ Export CSV</button>
+      <button class="export-btn" onclick="window.print()">🖨 Print Report</button>
+    </div>
+  </div>
+
+  <div class="report-grid">
+    <div class="report-card">
+      <div class="report-title">Portfolio Summary</div>
+      <div class="report-row"><span>Total Projects</span><span class="report-val">200</span></div>
+      <div class="report-row"><span>High Risk Projects</span><span class="report-val" style="color:var(--red)">98 (49%)</span></div>
+      <div class="report-row"><span>Medium Risk Projects</span><span class="report-val" style="color:var(--yellow)">78 (39%)</span></div>
+      <div class="report-row"><span>Low Risk Projects</span><span class="report-val" style="color:var(--green)">24 (12%)</span></div>
+      <div class="report-row"><span>Avg Delay (days)</span><span class="report-val">52.4</span></div>
+      <div class="report-row"><span>Avg Overrun (%)</span><span class="report-val">31.4%</span></div>
+    </div>
+
+    <div class="report-card">
+      <div class="report-title">Contractor Performance</div>
+      <div class="report-row"><span>AlphaConst</span><span class="report-val" style="color:var(--green)">49.6 days avg</span></div>
+      <div class="report-row"><span>TechBuild</span><span class="report-val" style="color:var(--yellow)">51.7 days avg</span></div>
+      <div class="report-row"><span>InfraPro</span><span class="report-val" style="color:var(--yellow)">52.9 days avg</span></div>
+      <div class="report-row"><span>MegaStruct</span><span class="report-val" style="color:var(--red)">53.4 days avg</span></div>
+      <div class="report-row"><span>BuildCo</span><span class="report-val" style="color:var(--red)">56.2 days avg</span></div>
+    </div>
+
+    <div class="report-card">
+      <div class="report-title">Location Risk Index</div>
+      <div class="report-row"><span>Noida</span><span class="report-val" style="color:var(--green)">33.9 days</span></div>
+      <div class="report-row"><span>Mumbai</span><span class="report-val" style="color:var(--green)">46.0 days</span></div>
+      <div class="report-row"><span>Chennai</span><span class="report-val" style="color:var(--yellow)">52.1 days</span></div>
+      <div class="report-row"><span>Delhi</span><span class="report-val" style="color:var(--yellow)">53.0 days</span></div>
+      <div class="report-row"><span>Pune</span><span class="report-val" style="color:var(--yellow)">53.7 days</span></div>
+      <div class="report-row"><span>Hyderabad</span><span class="report-val" style="color:var(--red)">54.5 days</span></div>
+      <div class="report-row"><span>Lucknow</span><span class="report-val" style="color:var(--red)">64.5 days</span></div>
+    </div>
+  </div>
+
+  <div class="report-card" style="margin-bottom:20px;">
+    <div class="report-title">Key Findings &amp; Recommendations</div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:8px;">
+      <div>
+        <div style="font-size:12px; font-weight:600; color:var(--red); margin-bottom:10px; text-transform:uppercase;">⚠ Risk Findings</div>
+        <div class="report-row"><span>🔴 Low contractor rating is the #1 delay driver</span></div>
+        <div class="report-row"><span>🔴 Permit delays multiply risk by 2x</span></div>
+        <div class="report-row"><span>🔴 Material shortages cause avg +45 day delays</span></div>
+        <div class="report-row"><span>🔴 Lucknow projects show highest delay (64.5 days)</span></div>
+        <div class="report-row"><span>🔴 Mechanical projects have highest High-risk count</span></div>
+      </div>
+      <div>
+        <div style="font-size:12px; font-weight:600; color:var(--green); margin-bottom:10px; text-transform:uppercase;">✅ Recommendations</div>
+        <div class="report-row"><span>✅ Pre-qualify contractors with rating ≥ 3.5</span></div>
+        <div class="report-row"><span>✅ Resolve permits 30 days before project start</span></div>
+        <div class="report-row"><span>✅ Maintain material buffer for high-risk projects</span></div>
+        <div class="report-row"><span>✅ Increase inspections to minimum 10 per project</span></div>
+        <div class="report-row"><span>✅ Assign senior PM to all Lucknow site projects</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ============ DATA ============
+const STATS = {"total": 200, "high_risk": 98, "medium_risk": 78, "low_risk": 24, "avg_delay": 52.4, "avg_overrun": 31.4, "risk_counts": {"High": 98, "Low": 24, "Medium": 78}, "by_type": {"Civil": {"High": 19, "Medium": 19, "Low": 3}, "Structural": {"Low": 1, "High": 20, "Medium": 17}, "Mechanical": {"High": 22, "Low": 7, "Medium": 8}, "Infrastructure": {"Medium": 17, "Low": 10, "High": 17}, "Electrical": {"High": 20, "Medium": 17, "Low": 3}}, "contractor_avg_delay": {"TechBuild": 51.7, "BuildCo": 56.2, "InfraPro": 52.9, "MegaStruct": 53.4, "AlphaConst": 49.6}, "location_avg_delay": {"Mumbai": 46.0, "Noida": 33.9, "Chennai": 52.1, "Hyderabad": 54.5, "Lucknow": 64.5, "Delhi": 53.0, "Pune": 53.7}, "delay_buckets": {"0-10": 26, "11-30": 40, "31-60": 58, "61-90": 32, "90+": 44}};
+const ALL_ROWS = [{"project_id": "PRJ-1001", "project_type": "Civil", "contractor": "TechBuild", "location": "Mumbai", "project_manager": "Vikram Rao", "planned_duration_days": "72", "actual_duration_days": "128", "delay_days": "56", "overrun_pct": "77.8", "no_of_resources": "13", "budget_allocated": "49923746", "budget_spent": "54457196", "site_inspections_done": "5", "weather_issues": "No", "contractor_rating": "2.4", "permit_delays": "2", "design_changes": "0", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1002", "project_type": "Structural", "contractor": "TechBuild", "location": "Noida", "project_manager": "Amit Singh", "planned_duration_days": "161", "actual_duration_days": "163", "delay_days": "2", "overrun_pct": "1.2", "no_of_resources": "33", "budget_allocated": "40044950", "budget_spent": "35675410", "site_inspections_done": "10", "weather_issues": "No", "contractor_rating": "3.0", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Low"}, {"project_id": "PRJ-1003", "project_type": "Mechanical", "contractor": "BuildCo", "location": "Chennai", "project_manager": "Amit Singh", "planned_duration_days": "109", "actual_duration_days": "202", "delay_days": "93", "overrun_pct": "85.3", "no_of_resources": "43", "budget_allocated": "18251694", "budget_spent": "21569156", "site_inspections_done": "3", "weather_issues": "No", "contractor_rating": "4.5", "permit_delays": "1", "design_changes": "2", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1004", "project_type": "Structural", "contractor": "InfraPro", "location": "Hyderabad", "project_manager": "Amit Singh", "planned_duration_days": "245", "actual_duration_days": "338", "delay_days": "93", "overrun_pct": "38.0", "no_of_resources": "9", "budget_allocated": "3575222", "budget_spent": "3271549", "site_inspections_done": "9", "weather_issues": "No", "contractor_rating": "2.2", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1005", "project_type": "Infrastructure", "contractor": "InfraPro", "location": "Lucknow", "project_manager": "Vikram Rao", "planned_duration_days": "167", "actual_duration_days": "201", "delay_days": "34", "overrun_pct": "20.4", "no_of_resources": "48", "budget_allocated": "43988918", "budget_spent": "41254834", "site_inspections_done": "4", "weather_issues": "No", "contractor_rating": "4.0", "permit_delays": "2", "design_changes": "0", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1006", "project_type": "Infrastructure", "contractor": "MegaStruct", "location": "Lucknow", "project_manager": "Neha Gupta", "planned_duration_days": "88", "actual_duration_days": "95", "delay_days": "7", "overrun_pct": "8.0", "no_of_resources": "25", "budget_allocated": "27421713", "budget_spent": "24875570", "site_inspections_done": "10", "weather_issues": "Yes", "contractor_rating": "4.4", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Low"}, {"project_id": "PRJ-1007", "project_type": "Electrical", "contractor": "AlphaConst", "location": "Hyderabad", "project_manager": "Rajesh Kumar", "planned_duration_days": "186", "actual_duration_days": "248", "delay_days": "62", "overrun_pct": "33.3", "no_of_resources": "42", "budget_allocated": "29251707", "budget_spent": "33707118", "site_inspections_done": "20", "weather_issues": "No", "contractor_rating": "3.4", "permit_delays": "1", "design_changes": "1", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1008", "project_type": "Civil", "contractor": "BuildCo", "location": "Lucknow", "project_manager": "Rajesh Kumar", "planned_duration_days": "138", "actual_duration_days": "253", "delay_days": "115", "overrun_pct": "83.3", "no_of_resources": "32", "budget_allocated": "40524332", "budget_spent": "45496025", "site_inspections_done": "4", "weather_issues": "Yes", "contractor_rating": "4.3", "permit_delays": "1", "design_changes": "1", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1009", "project_type": "Structural", "contractor": "InfraPro", "location": "Noida", "project_manager": "Vikram Rao", "planned_duration_days": "196", "actual_duration_days": "212", "delay_days": "16", "overrun_pct": "8.2", "no_of_resources": "32", "budget_allocated": "11113787", "budget_spent": "12153905", "site_inspections_done": "16", "weather_issues": "No", "contractor_rating": "1.9", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1010", "project_type": "Electrical", "contractor": "TechBuild", "location": "Delhi", "project_manager": "Priya Sharma", "planned_duration_days": "251", "actual_duration_days": "335", "delay_days": "84", "overrun_pct": "33.5", "no_of_resources": "38", "budget_allocated": "538379", "budget_spent": "646703", "site_inspections_done": "12", "weather_issues": "Yes", "contractor_rating": "3.4", "permit_delays": "1", "design_changes": "0", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1011", "project_type": "Civil", "contractor": "TechBuild", "location": "Chennai", "project_manager": "Priya Sharma", "planned_duration_days": "103", "actual_duration_days": "140", "delay_days": "37", "overrun_pct": "35.9", "no_of_resources": "39", "budget_allocated": "8939645", "budget_spent": "10148103", "site_inspections_done": "6", "weather_issues": "No", "contractor_rating": "4.4", "permit_delays": "1", "design_changes": "2", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1012", "project_type": "Mechanical", "contractor": "TechBuild", "location": "Chennai", "project_manager": "Priya Sharma", "planned_duration_days": "251", "actual_duration_days": "259", "delay_days": "8", "overrun_pct": "3.2", "no_of_resources": "33", "budget_allocated": "8620454", "budget_spent": "7352181", "site_inspections_done": "9", "weather_issues": "No", "contractor_rating": "4.6", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Low"}, {"project_id": "PRJ-1013", "project_type": "Civil", "contractor": "AlphaConst", "location": "Chennai", "project_manager": "Neha Gupta", "planned_duration_days": "177", "actual_duration_days": "195", "delay_days": "18", "overrun_pct": "10.2", "no_of_resources": "26", "budget_allocated": "5255156", "budget_spent": "4977678", "site_inspections_done": "18", "weather_issues": "Yes", "contractor_rating": "4.7", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1014", "project_type": "Mechanical", "contractor": "BuildCo", "location": "Delhi", "project_manager": "Neha Gupta", "planned_duration_days": "268", "actual_duration_days": "319", "delay_days": "51", "overrun_pct": "19.0", "no_of_resources": "47", "budget_allocated": "29427355", "budget_spent": "33585012", "site_inspections_done": "13", "weather_issues": "Yes", "contractor_rating": "1.8", "permit_delays": "1", "design_changes": "1", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1015", "project_type": "Civil", "contractor": "MegaStruct", "location": "Noida", "project_manager": "Vikram Rao", "planned_duration_days": "187", "actual_duration_days": "241", "delay_days": "54", "overrun_pct": "28.9", "no_of_resources": "33", "budget_allocated": "9907474", "budget_spent": "8809364", "site_inspections_done": "15", "weather_issues": "Yes", "contractor_rating": "2.2", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1016", "project_type": "Structural", "contractor": "TechBuild", "location": "Hyderabad", "project_manager": "Rajesh Kumar", "planned_duration_days": "67", "actual_duration_days": "119", "delay_days": "52", "overrun_pct": "77.6", "no_of_resources": "20", "budget_allocated": "11660949", "budget_spent": "14507661", "site_inspections_done": "15", "weather_issues": "Yes", "contractor_rating": "4.7", "permit_delays": "1", "design_changes": "1", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1017", "project_type": "Infrastructure", "contractor": "AlphaConst", "location": "Lucknow", "project_manager": "Vikram Rao", "planned_duration_days": "292", "actual_duration_days": "292", "delay_days": "0", "overrun_pct": "0.0", "no_of_resources": "40", "budget_allocated": "44917431", "budget_spent": "39275039", "site_inspections_done": "17", "weather_issues": "No", "contractor_rating": "3.0", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Low"}, {"project_id": "PRJ-1018", "project_type": "Infrastructure", "contractor": "AlphaConst", "location": "Delhi", "project_manager": "Priya Sharma", "planned_duration_days": "89", "actual_duration_days": "142", "delay_days": "53", "overrun_pct": "59.6", "no_of_resources": "37", "budget_allocated": "36143271", "budget_spent": "36559288", "site_inspections_done": "7", "weather_issues": "Yes", "contractor_rating": "3.5", "permit_delays": "0", "design_changes": "2", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1019", "project_type": "Structural", "contractor": "InfraPro", "location": "Mumbai", "project_manager": "Amit Singh", "planned_duration_days": "186", "actual_duration_days": "257", "delay_days": "71", "overrun_pct": "38.2", "no_of_resources": "44", "budget_allocated": "6001813", "budget_spent": "6051714", "site_inspections_done": "15", "weather_issues": "No", "contractor_rating": "3.6", "permit_delays": "2", "design_changes": "2", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1020", "project_type": "Infrastructure", "contractor": "AlphaConst", "location": "Pune", "project_manager": "Priya Sharma", "planned_duration_days": "294", "actual_duration_days": "366", "delay_days": "72", "overrun_pct": "24.5", "no_of_resources": "9", "budget_allocated": "1125149", "budget_spent": "1376399", "site_inspections_done": "16", "weather_issues": "No", "contractor_rating": "4.8", "permit_delays": "2", "design_changes": "2", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1021", "project_type": "Civil", "contractor": "InfraPro", "location": "Lucknow", "project_manager": "Rajesh Kumar", "planned_duration_days": "185", "actual_duration_days": "300", "delay_days": "115", "overrun_pct": "62.2", "no_of_resources": "33", "budget_allocated": "36954740", "budget_spent": "45290695", "site_inspections_done": "11", "weather_issues": "No", "contractor_rating": "2.5", "permit_delays": "2", "design_changes": "2", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1022", "project_type": "Electrical", "contractor": "InfraPro", "location": "Chennai", "project_manager": "Neha Gupta", "planned_duration_days": "195", "actual_duration_days": "266", "delay_days": "71", "overrun_pct": "36.4", "no_of_resources": "40", "budget_allocated": "10931932", "budget_spent": "10390238", "site_inspections_done": "10", "weather_issues": "Yes", "contractor_rating": "4.6", "permit_delays": "0", "design_changes": "2", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1023", "project_type": "Civil", "contractor": "MegaStruct", "location": "Chennai", "project_manager": "Rajesh Kumar", "planned_duration_days": "107", "actual_duration_days": "152", "delay_days": "45", "overrun_pct": "42.1", "no_of_resources": "7", "budget_allocated": "737947", "budget_spent": "660278", "site_inspections_done": "12", "weather_issues": "No", "contractor_rating": "4.4", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1024", "project_type": "Electrical", "contractor": "InfraPro", "location": "Mumbai", "project_manager": "Priya Sharma", "planned_duration_days": "339", "actual_duration_days": "389", "delay_days": "50", "overrun_pct": "14.7", "no_of_resources": "42", "budget_allocated": "37579331", "budget_spent": "41967596", "site_inspections_done": "6", "weather_issues": "Yes", "contractor_rating": "4.4", "permit_delays": "1", "design_changes": "0", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1025", "project_type": "Infrastructure", "contractor": "MegaStruct", "location": "Noida", "project_manager": "Priya Sharma", "planned_duration_days": "346", "actual_duration_days": "377", "delay_days": "31", "overrun_pct": "9.0", "no_of_resources": "14", "budget_allocated": "16387173", "budget_spent": "15677974", "site_inspections_done": "7", "weather_issues": "No", "contractor_rating": "4.9", "permit_delays": "0", "design_changes": "1", "material_shortage": "Yes", "delay_risk": "Medium"}, {"project_id": "PRJ-1026", "project_type": "Civil", "contractor": "MegaStruct", "location": "Pune", "project_manager": "Amit Singh", "planned_duration_days": "255", "actual_duration_days": "277", "delay_days": "22", "overrun_pct": "8.6", "no_of_resources": "19", "budget_allocated": "13893105", "budget_spent": "16612558", "site_inspections_done": "16", "weather_issues": "Yes", "contractor_rating": "4.5", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1027", "project_type": "Infrastructure", "contractor": "BuildCo", "location": "Delhi", "project_manager": "Vikram Rao", "planned_duration_days": "239", "actual_duration_days": "265", "delay_days": "26", "overrun_pct": "10.9", "no_of_resources": "39", "budget_allocated": "22723091", "budget_spent": "23264480", "site_inspections_done": "2", "weather_issues": "No", "contractor_rating": "2.9", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1028", "project_type": "Infrastructure", "contractor": "AlphaConst", "location": "Noida", "project_manager": "Vikram Rao", "planned_duration_days": "283", "actual_duration_days": "293", "delay_days": "10", "overrun_pct": "3.5", "no_of_resources": "12", "budget_allocated": "26350027", "budget_spent": "29637005", "site_inspections_done": "20", "weather_issues": "No", "contractor_rating": "4.9", "permit_delays": "0", "design_changes": "1", "material_shortage": "Yes", "delay_risk": "Medium"}, {"project_id": "PRJ-1029", "project_type": "Electrical", "contractor": "MegaStruct", "location": "Lucknow", "project_manager": "Amit Singh", "planned_duration_days": "246", "actual_duration_days": "276", "delay_days": "30", "overrun_pct": "12.2", "no_of_resources": "47", "budget_allocated": "22659349", "budget_spent": "24285497", "site_inspections_done": "12", "weather_issues": "No", "contractor_rating": "1.7", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1030", "project_type": "Electrical", "contractor": "MegaStruct", "location": "Noida", "project_manager": "Vikram Rao", "planned_duration_days": "275", "actual_duration_days": "298", "delay_days": "23", "overrun_pct": "8.4", "no_of_resources": "16", "budget_allocated": "41806506", "budget_spent": "45680490", "site_inspections_done": "20", "weather_issues": "No", "contractor_rating": "3.9", "permit_delays": "0", "design_changes": "1", "material_shortage": "Yes", "delay_risk": "Medium"}, {"project_id": "PRJ-1031", "project_type": "Infrastructure", "contractor": "AlphaConst", "location": "Pune", "project_manager": "Rajesh Kumar", "planned_duration_days": "298", "actual_duration_days": "308", "delay_days": "10", "overrun_pct": "3.4", "no_of_resources": "18", "budget_allocated": "34804306", "budget_spent": "40977524", "site_inspections_done": "17", "weather_issues": "No", "contractor_rating": "3.0", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Low"}, {"project_id": "PRJ-1032", "project_type": "Electrical", "contractor": "TechBuild", "location": "Lucknow", "project_manager": "Neha Gupta", "planned_duration_days": "218", "actual_duration_days": "336", "delay_days": "118", "overrun_pct": "54.1", "no_of_resources": "14", "budget_allocated": "2139160", "budget_spent": "2241307", "site_inspections_done": "3", "weather_issues": "Yes", "contractor_rating": "4.3", "permit_delays": "0", "design_changes": "1", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1033", "project_type": "Electrical", "contractor": "BuildCo", "location": "Hyderabad", "project_manager": "Priya Sharma", "planned_duration_days": "135", "actual_duration_days": "160", "delay_days": "25", "overrun_pct": "18.5", "no_of_resources": "11", "budget_allocated": "29031078", "budget_spent": "33982811", "site_inspections_done": "9", "weather_issues": "Yes", "contractor_rating": "4.6", "permit_delays": "0", "design_changes": "2", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1034", "project_type": "Structural", "contractor": "MegaStruct", "location": "Pune", "project_manager": "Priya Sharma", "planned_duration_days": "346", "actual_duration_days": "451", "delay_days": "105", "overrun_pct": "30.3", "no_of_resources": "33", "budget_allocated": "41614401", "budget_spent": "49352397", "site_inspections_done": "18", "weather_issues": "No", "contractor_rating": "2.6", "permit_delays": "1", "design_changes": "2", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1035", "project_type": "Infrastructure", "contractor": "BuildCo", "location": "Mumbai", "project_manager": "Priya Sharma", "planned_duration_days": "326", "actual_duration_days": "334", "delay_days": "8", "overrun_pct": "2.5", "no_of_resources": "22", "budget_allocated": "30019350", "budget_spent": "28293375", "site_inspections_done": "4", "weather_issues": "No", "contractor_rating": "3.7", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Low"}, {"project_id": "PRJ-1036", "project_type": "Electrical", "contractor": "AlphaConst", "location": "Lucknow", "project_manager": "Rajesh Kumar", "planned_duration_days": "169", "actual_duration_days": "263", "delay_days": "94", "overrun_pct": "55.6", "no_of_resources": "26", "budget_allocated": "36914017", "budget_spent": "44027083", "site_inspections_done": "16", "weather_issues": "Yes", "contractor_rating": "3.0", "permit_delays": "1", "design_changes": "0", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1037", "project_type": "Structural", "contractor": "MegaStruct", "location": "Hyderabad", "project_manager": "Rajesh Kumar", "planned_duration_days": "254", "actual_duration_days": "333", "delay_days": "79", "overrun_pct": "31.1", "no_of_resources": "27", "budget_allocated": "20539555", "budget_spent": "20653403", "site_inspections_done": "14", "weather_issues": "No", "contractor_rating": "1.5", "permit_delays": "1", "design_changes": "2", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1038", "project_type": "Mechanical", "contractor": "TechBuild", "location": "Noida", "project_manager": "Neha Gupta", "planned_duration_days": "144", "actual_duration_days": "243", "delay_days": "99", "overrun_pct": "68.8", "no_of_resources": "44", "budget_allocated": "36344430", "budget_spent": "33534701", "site_inspections_done": "2", "weather_issues": "No", "contractor_rating": "4.7", "permit_delays": "1", "design_changes": "2", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1039", "project_type": "Infrastructure", "contractor": "BuildCo", "location": "Lucknow", "project_manager": "Vikram Rao", "planned_duration_days": "254", "actual_duration_days": "359", "delay_days": "105", "overrun_pct": "41.3", "no_of_resources": "25", "budget_allocated": "23149278", "budget_spent": "20159184", "site_inspections_done": "14", "weather_issues": "No", "contractor_rating": "2.2", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1040", "project_type": "Infrastructure", "contractor": "TechBuild", "location": "Hyderabad", "project_manager": "Rajesh Kumar", "planned_duration_days": "174", "actual_duration_days": "249", "delay_days": "75", "overrun_pct": "43.1", "no_of_resources": "46", "budget_allocated": "3201677", "budget_spent": "3443685", "site_inspections_done": "2", "weather_issues": "Yes", "contractor_rating": "4.2", "permit_delays": "0", "design_changes": "0", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1041", "project_type": "Electrical", "contractor": "AlphaConst", "location": "Lucknow", "project_manager": "Neha Gupta", "planned_duration_days": "298", "actual_duration_days": "327", "delay_days": "29", "overrun_pct": "9.7", "no_of_resources": "15", "budget_allocated": "41160770", "budget_spent": "41517295", "site_inspections_done": "5", "weather_issues": "No", "contractor_rating": "4.2", "permit_delays": "0", "design_changes": "1", "material_shortage": "Yes", "delay_risk": "Medium"}, {"project_id": "PRJ-1042", "project_type": "Electrical", "contractor": "BuildCo", "location": "Pune", "project_manager": "Vikram Rao", "planned_duration_days": "98", "actual_duration_days": "215", "delay_days": "117", "overrun_pct": "119.4", "no_of_resources": "45", "budget_allocated": "16797346", "budget_spent": "17155990", "site_inspections_done": "5", "weather_issues": "No", "contractor_rating": "3.9", "permit_delays": "0", "design_changes": "2", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1043", "project_type": "Infrastructure", "contractor": "TechBuild", "location": "Hyderabad", "project_manager": "Priya Sharma", "planned_duration_days": "95", "actual_duration_days": "134", "delay_days": "39", "overrun_pct": "41.1", "no_of_resources": "5", "budget_allocated": "28689664", "budget_spent": "32807151", "site_inspections_done": "17", "weather_issues": "No", "contractor_rating": "3.8", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1044", "project_type": "Infrastructure", "contractor": "MegaStruct", "location": "Chennai", "project_manager": "Vikram Rao", "planned_duration_days": "335", "actual_duration_days": "338", "delay_days": "3", "overrun_pct": "0.9", "no_of_resources": "42", "budget_allocated": "18511719", "budget_spent": "20682688", "site_inspections_done": "12", "weather_issues": "No", "contractor_rating": "3.1", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Low"}, {"project_id": "PRJ-1045", "project_type": "Infrastructure", "contractor": "InfraPro", "location": "Chennai", "project_manager": "Rajesh Kumar", "planned_duration_days": "74", "actual_duration_days": "83", "delay_days": "9", "overrun_pct": "12.2", "no_of_resources": "16", "budget_allocated": "33218922", "budget_spent": "35100804", "site_inspections_done": "8", "weather_issues": "No", "contractor_rating": "4.5", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Low"}, {"project_id": "PRJ-1046", "project_type": "Electrical", "contractor": "InfraPro", "location": "Mumbai", "project_manager": "Neha Gupta", "planned_duration_days": "103", "actual_duration_days": "159", "delay_days": "56", "overrun_pct": "54.4", "no_of_resources": "36", "budget_allocated": "37757244", "budget_spent": "42541648", "site_inspections_done": "9", "weather_issues": "Yes", "contractor_rating": "4.0", "permit_delays": "1", "design_changes": "1", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1047", "project_type": "Infrastructure", "contractor": "InfraPro", "location": "Pune", "project_manager": "Priya Sharma", "planned_duration_days": "357", "actual_duration_days": "436", "delay_days": "79", "overrun_pct": "22.1", "no_of_resources": "38", "budget_allocated": "23569168", "budget_spent": "21171296", "site_inspections_done": "15", "weather_issues": "No", "contractor_rating": "3.2", "permit_delays": "2", "design_changes": "1", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1048", "project_type": "Electrical", "contractor": "AlphaConst", "location": "Pune", "project_manager": "Rajesh Kumar", "planned_duration_days": "221", "actual_duration_days": "264", "delay_days": "43", "overrun_pct": "19.5", "no_of_resources": "49", "budget_allocated": "12925195", "budget_spent": "15291169", "site_inspections_done": "8", "weather_issues": "Yes", "contractor_rating": "4.1", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1049", "project_type": "Infrastructure", "contractor": "InfraPro", "location": "Lucknow", "project_manager": "Priya Sharma", "planned_duration_days": "176", "actual_duration_days": "291", "delay_days": "115", "overrun_pct": "65.3", "no_of_resources": "5", "budget_allocated": "48014316", "budget_spent": "53062919", "site_inspections_done": "19", "weather_issues": "No", "contractor_rating": "2.1", "permit_delays": "0", "design_changes": "1", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1050", "project_type": "Mechanical", "contractor": "BuildCo", "location": "Noida", "project_manager": "Rajesh Kumar", "planned_duration_days": "112", "actual_duration_days": "152", "delay_days": "40", "overrun_pct": "35.7", "no_of_resources": "35", "budget_allocated": "32625966", "budget_spent": "32961458", "site_inspections_done": "16", "weather_issues": "Yes", "contractor_rating": "3.5", "permit_delays": "0", "design_changes": "0", "material_shortage": "Yes", "delay_risk": "Medium"}, {"project_id": "PRJ-1051", "project_type": "Civil", "contractor": "AlphaConst", "location": "Hyderabad", "project_manager": "Neha Gupta", "planned_duration_days": "355", "actual_duration_days": "428", "delay_days": "73", "overrun_pct": "20.6", "no_of_resources": "41", "budget_allocated": "20890056", "budget_spent": "25348031", "site_inspections_done": "4", "weather_issues": "Yes", "contractor_rating": "2.0", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1052", "project_type": "Infrastructure", "contractor": "TechBuild", "location": "Mumbai", "project_manager": "Vikram Rao", "planned_duration_days": "361", "actual_duration_days": "363", "delay_days": "2", "overrun_pct": "0.6", "no_of_resources": "44", "budget_allocated": "4541987", "budget_spent": "3997066", "site_inspections_done": "5", "weather_issues": "No", "contractor_rating": "2.6", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Low"}, {"project_id": "PRJ-1053", "project_type": "Civil", "contractor": "BuildCo", "location": "Lucknow", "project_manager": "Priya Sharma", "planned_duration_days": "269", "actual_duration_days": "308", "delay_days": "39", "overrun_pct": "14.5", "no_of_resources": "35", "budget_allocated": "20046080", "budget_spent": "24447486", "site_inspections_done": "3", "weather_issues": "No", "contractor_rating": "3.9", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1054", "project_type": "Structural", "contractor": "AlphaConst", "location": "Lucknow", "project_manager": "Vikram Rao", "planned_duration_days": "161", "actual_duration_days": "190", "delay_days": "29", "overrun_pct": "18.0", "no_of_resources": "19", "budget_allocated": "43962030", "budget_spent": "53566723", "site_inspections_done": "6", "weather_issues": "No", "contractor_rating": "1.9", "permit_delays": "0", "design_changes": "0", "material_shortage": "Yes", "delay_risk": "Medium"}, {"project_id": "PRJ-1055", "project_type": "Mechanical", "contractor": "MegaStruct", "location": "Lucknow", "project_manager": "Amit Singh", "planned_duration_days": "123", "actual_duration_days": "173", "delay_days": "50", "overrun_pct": "40.7", "no_of_resources": "49", "budget_allocated": "27511889", "budget_spent": "30028827", "site_inspections_done": "10", "weather_issues": "No", "contractor_rating": "3.9", "permit_delays": "2", "design_changes": "2", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1056", "project_type": "Civil", "contractor": "MegaStruct", "location": "Chennai", "project_manager": "Neha Gupta", "planned_duration_days": "106", "actual_duration_days": "173", "delay_days": "67", "overrun_pct": "63.2", "no_of_resources": "41", "budget_allocated": "39901152", "budget_spent": "48536923", "site_inspections_done": "2", "weather_issues": "Yes", "contractor_rating": "4.9", "permit_delays": "0", "design_changes": "2", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1057", "project_type": "Electrical", "contractor": "TechBuild", "location": "Pune", "project_manager": "Neha Gupta", "planned_duration_days": "359", "actual_duration_days": "360", "delay_days": "1", "overrun_pct": "0.3", "no_of_resources": "36", "budget_allocated": "6623174", "budget_spent": "7467426", "site_inspections_done": "17", "weather_issues": "No", "contractor_rating": "3.7", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Low"}, {"project_id": "PRJ-1058", "project_type": "Infrastructure", "contractor": "AlphaConst", "location": "Hyderabad", "project_manager": "Neha Gupta", "planned_duration_days": "265", "actual_duration_days": "275", "delay_days": "10", "overrun_pct": "3.8", "no_of_resources": "10", "budget_allocated": "21606889", "budget_spent": "18834328", "site_inspections_done": "10", "weather_issues": "No", "contractor_rating": "1.6", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1059", "project_type": "Structural", "contractor": "MegaStruct", "location": "Delhi", "project_manager": "Rajesh Kumar", "planned_duration_days": "245", "actual_duration_days": "283", "delay_days": "38", "overrun_pct": "15.5", "no_of_resources": "45", "budget_allocated": "30164866", "budget_spent": "37382073", "site_inspections_done": "3", "weather_issues": "No", "contractor_rating": "4.1", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1060", "project_type": "Structural", "contractor": "TechBuild", "location": "Hyderabad", "project_manager": "Amit Singh", "planned_duration_days": "182", "actual_duration_days": "242", "delay_days": "60", "overrun_pct": "33.0", "no_of_resources": "5", "budget_allocated": "37560964", "budget_spent": "39572309", "site_inspections_done": "15", "weather_issues": "Yes", "contractor_rating": "2.6", "permit_delays": "0", "design_changes": "0", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1061", "project_type": "Infrastructure", "contractor": "TechBuild", "location": "Noida", "project_manager": "Rajesh Kumar", "planned_duration_days": "272", "actual_duration_days": "314", "delay_days": "42", "overrun_pct": "15.4", "no_of_resources": "20", "budget_allocated": "31154421", "budget_spent": "29923789", "site_inspections_done": "19", "weather_issues": "No", "contractor_rating": "4.9", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1062", "project_type": "Mechanical", "contractor": "AlphaConst", "location": "Hyderabad", "project_manager": "Amit Singh", "planned_duration_days": "234", "actual_duration_days": "336", "delay_days": "102", "overrun_pct": "43.6", "no_of_resources": "5", "budget_allocated": "19481002", "budget_spent": "19149357", "site_inspections_done": "11", "weather_issues": "No", "contractor_rating": "2.4", "permit_delays": "2", "design_changes": "2", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1063", "project_type": "Structural", "contractor": "BuildCo", "location": "Pune", "project_manager": "Neha Gupta", "planned_duration_days": "253", "actual_duration_days": "350", "delay_days": "97", "overrun_pct": "38.3", "no_of_resources": "17", "budget_allocated": "47308327", "budget_spent": "53557338", "site_inspections_done": "9", "weather_issues": "No", "contractor_rating": "4.8", "permit_delays": "2", "design_changes": "1", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1064", "project_type": "Mechanical", "contractor": "BuildCo", "location": "Chennai", "project_manager": "Neha Gupta", "planned_duration_days": "257", "actual_duration_days": "358", "delay_days": "101", "overrun_pct": "39.3", "no_of_resources": "7", "budget_allocated": "8972243", "budget_spent": "7681488", "site_inspections_done": "18", "weather_issues": "Yes", "contractor_rating": "3.2", "permit_delays": "2", "design_changes": "1", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1065", "project_type": "Electrical", "contractor": "AlphaConst", "location": "Delhi", "project_manager": "Vikram Rao", "planned_duration_days": "269", "actual_duration_days": "376", "delay_days": "107", "overrun_pct": "39.8", "no_of_resources": "21", "budget_allocated": "23220459", "budget_spent": "20372895", "site_inspections_done": "14", "weather_issues": "Yes", "contractor_rating": "1.8", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1066", "project_type": "Infrastructure", "contractor": "InfraPro", "location": "Noida", "project_manager": "Rajesh Kumar", "planned_duration_days": "176", "actual_duration_days": "226", "delay_days": "50", "overrun_pct": "28.4", "no_of_resources": "11", "budget_allocated": "43030096", "budget_spent": "41625039", "site_inspections_done": "5", "weather_issues": "Yes", "contractor_rating": "3.0", "permit_delays": "1", "design_changes": "0", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1067", "project_type": "Infrastructure", "contractor": "AlphaConst", "location": "Lucknow", "project_manager": "Priya Sharma", "planned_duration_days": "280", "actual_duration_days": "373", "delay_days": "93", "overrun_pct": "33.2", "no_of_resources": "31", "budget_allocated": "38478789", "budget_spent": "40366824", "site_inspections_done": "7", "weather_issues": "Yes", "contractor_rating": "2.4", "permit_delays": "0", "design_changes": "0", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1068", "project_type": "Structural", "contractor": "BuildCo", "location": "Hyderabad", "project_manager": "Amit Singh", "planned_duration_days": "133", "actual_duration_days": "153", "delay_days": "20", "overrun_pct": "15.0", "no_of_resources": "21", "budget_allocated": "31341254", "budget_spent": "39021763", "site_inspections_done": "10", "weather_issues": "Yes", "contractor_rating": "3.1", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1069", "project_type": "Infrastructure", "contractor": "AlphaConst", "location": "Pune", "project_manager": "Amit Singh", "planned_duration_days": "277", "actual_duration_days": "309", "delay_days": "32", "overrun_pct": "11.6", "no_of_resources": "24", "budget_allocated": "13869226", "budget_spent": "11910556", "site_inspections_done": "14", "weather_issues": "No", "contractor_rating": "3.1", "permit_delays": "1", "design_changes": "0", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1070", "project_type": "Mechanical", "contractor": "AlphaConst", "location": "Pune", "project_manager": "Priya Sharma", "planned_duration_days": "200", "actual_duration_days": "203", "delay_days": "3", "overrun_pct": "1.5", "no_of_resources": "48", "budget_allocated": "3791303", "budget_spent": "4175359", "site_inspections_done": "17", "weather_issues": "Yes", "contractor_rating": "3.5", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Low"}, {"project_id": "PRJ-1071", "project_type": "Civil", "contractor": "TechBuild", "location": "Mumbai", "project_manager": "Vikram Rao", "planned_duration_days": "218", "actual_duration_days": "239", "delay_days": "21", "overrun_pct": "9.6", "no_of_resources": "28", "budget_allocated": "49647832", "budget_spent": "59606405", "site_inspections_done": "6", "weather_issues": "No", "contractor_rating": "1.6", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1072", "project_type": "Infrastructure", "contractor": "TechBuild", "location": "Noida", "project_manager": "Priya Sharma", "planned_duration_days": "331", "actual_duration_days": "345", "delay_days": "14", "overrun_pct": "4.2", "no_of_resources": "15", "budget_allocated": "17744970", "budget_spent": "21188492", "site_inspections_done": "17", "weather_issues": "No", "contractor_rating": "4.7", "permit_delays": "0", "design_changes": "1", "material_shortage": "Yes", "delay_risk": "Medium"}, {"project_id": "PRJ-1073", "project_type": "Mechanical", "contractor": "AlphaConst", "location": "Hyderabad", "project_manager": "Amit Singh", "planned_duration_days": "345", "actual_duration_days": "423", "delay_days": "78", "overrun_pct": "22.6", "no_of_resources": "30", "budget_allocated": "1434065", "budget_spent": "1281105", "site_inspections_done": "10", "weather_issues": "No", "contractor_rating": "1.8", "permit_delays": "2", "design_changes": "0", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1074", "project_type": "Electrical", "contractor": "TechBuild", "location": "Delhi", "project_manager": "Rajesh Kumar", "planned_duration_days": "301", "actual_duration_days": "318", "delay_days": "17", "overrun_pct": "5.6", "no_of_resources": "40", "budget_allocated": "22512128", "budget_spent": "21876067", "site_inspections_done": "9", "weather_issues": "Yes", "contractor_rating": "3.7", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1075", "project_type": "Mechanical", "contractor": "MegaStruct", "location": "Lucknow", "project_manager": "Rajesh Kumar", "planned_duration_days": "119", "actual_duration_days": "183", "delay_days": "64", "overrun_pct": "53.8", "no_of_resources": "39", "budget_allocated": "9604260", "budget_spent": "11366423", "site_inspections_done": "14", "weather_issues": "Yes", "contractor_rating": "2.3", "permit_delays": "1", "design_changes": "1", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1076", "project_type": "Structural", "contractor": "AlphaConst", "location": "Lucknow", "project_manager": "Amit Singh", "planned_duration_days": "268", "actual_duration_days": "301", "delay_days": "33", "overrun_pct": "12.3", "no_of_resources": "28", "budget_allocated": "15080721", "budget_spent": "13183868", "site_inspections_done": "16", "weather_issues": "No", "contractor_rating": "1.6", "permit_delays": "1", "design_changes": "0", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1077", "project_type": "Infrastructure", "contractor": "TechBuild", "location": "Noida", "project_manager": "Vikram Rao", "planned_duration_days": "157", "actual_duration_days": "233", "delay_days": "76", "overrun_pct": "48.4", "no_of_resources": "34", "budget_allocated": "6652099", "budget_spent": "6200303", "site_inspections_done": "8", "weather_issues": "Yes", "contractor_rating": "4.8", "permit_delays": "2", "design_changes": "0", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1078", "project_type": "Structural", "contractor": "TechBuild", "location": "Chennai", "project_manager": "Amit Singh", "planned_duration_days": "166", "actual_duration_days": "229", "delay_days": "63", "overrun_pct": "38.0", "no_of_resources": "19", "budget_allocated": "22549258", "budget_spent": "26369227", "site_inspections_done": "6", "weather_issues": "No", "contractor_rating": "2.3", "permit_delays": "2", "design_changes": "0", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1079", "project_type": "Civil", "contractor": "AlphaConst", "location": "Delhi", "project_manager": "Rajesh Kumar", "planned_duration_days": "73", "actual_duration_days": "109", "delay_days": "36", "overrun_pct": "49.3", "no_of_resources": "20", "budget_allocated": "40017250", "budget_spent": "41637884", "site_inspections_done": "12", "weather_issues": "Yes", "contractor_rating": "1.6", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1080", "project_type": "Infrastructure", "contractor": "BuildCo", "location": "Hyderabad", "project_manager": "Neha Gupta", "planned_duration_days": "322", "actual_duration_days": "370", "delay_days": "48", "overrun_pct": "14.9", "no_of_resources": "37", "budget_allocated": "15367952", "budget_spent": "15683140", "site_inspections_done": "3", "weather_issues": "No", "contractor_rating": "1.9", "permit_delays": "2", "design_changes": "1", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1081", "project_type": "Civil", "contractor": "InfraPro", "location": "Hyderabad", "project_manager": "Vikram Rao", "planned_duration_days": "311", "actual_duration_days": "356", "delay_days": "45", "overrun_pct": "14.5", "no_of_resources": "10", "budget_allocated": "22116558", "budget_spent": "23492711", "site_inspections_done": "6", "weather_issues": "No", "contractor_rating": "1.8", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1082", "project_type": "Mechanical", "contractor": "InfraPro", "location": "Noida", "project_manager": "Neha Gupta", "planned_duration_days": "318", "actual_duration_days": "354", "delay_days": "36", "overrun_pct": "11.3", "no_of_resources": "49", "budget_allocated": "8178198", "budget_spent": "8255826", "site_inspections_done": "19", "weather_issues": "No", "contractor_rating": "3.0", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1083", "project_type": "Civil", "contractor": "MegaStruct", "location": "Delhi", "project_manager": "Amit Singh", "planned_duration_days": "220", "actual_duration_days": "276", "delay_days": "56", "overrun_pct": "25.5", "no_of_resources": "21", "budget_allocated": "25618916", "budget_spent": "30094738", "site_inspections_done": "6", "weather_issues": "No", "contractor_rating": "2.6", "permit_delays": "1", "design_changes": "0", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1084", "project_type": "Structural", "contractor": "InfraPro", "location": "Chennai", "project_manager": "Amit Singh", "planned_duration_days": "90", "actual_duration_days": "103", "delay_days": "13", "overrun_pct": "14.4", "no_of_resources": "40", "budget_allocated": "22622167", "budget_spent": "22410841", "site_inspections_done": "5", "weather_issues": "No", "contractor_rating": "4.8", "permit_delays": "1", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1085", "project_type": "Structural", "contractor": "AlphaConst", "location": "Mumbai", "project_manager": "Neha Gupta", "planned_duration_days": "319", "actual_duration_days": "399", "delay_days": "80", "overrun_pct": "25.1", "no_of_resources": "35", "budget_allocated": "15548818", "budget_spent": "18472961", "site_inspections_done": "5", "weather_issues": "Yes", "contractor_rating": "2.0", "permit_delays": "0", "design_changes": "2", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1086", "project_type": "Structural", "contractor": "InfraPro", "location": "Pune", "project_manager": "Rajesh Kumar", "planned_duration_days": "345", "actual_duration_days": "374", "delay_days": "29", "overrun_pct": "8.4", "no_of_resources": "47", "budget_allocated": "47038063", "budget_spent": "43395540", "site_inspections_done": "10", "weather_issues": "Yes", "contractor_rating": "3.6", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1087", "project_type": "Electrical", "contractor": "TechBuild", "location": "Pune", "project_manager": "Amit Singh", "planned_duration_days": "349", "actual_duration_days": "437", "delay_days": "88", "overrun_pct": "25.2", "no_of_resources": "45", "budget_allocated": "2557363", "budget_spent": "2911912", "site_inspections_done": "4", "weather_issues": "No", "contractor_rating": "1.7", "permit_delays": "2", "design_changes": "0", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1088", "project_type": "Structural", "contractor": "AlphaConst", "location": "Hyderabad", "project_manager": "Neha Gupta", "planned_duration_days": "365", "actual_duration_days": "406", "delay_days": "41", "overrun_pct": "11.2", "no_of_resources": "14", "budget_allocated": "11063599", "budget_spent": "10612943", "site_inspections_done": "3", "weather_issues": "Yes", "contractor_rating": "4.6", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1089", "project_type": "Structural", "contractor": "AlphaConst", "location": "Delhi", "project_manager": "Rajesh Kumar", "planned_duration_days": "118", "actual_duration_days": "213", "delay_days": "95", "overrun_pct": "80.5", "no_of_resources": "23", "budget_allocated": "46014432", "budget_spent": "42874833", "site_inspections_done": "20", "weather_issues": "No", "contractor_rating": "3.0", "permit_delays": "1", "design_changes": "2", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1090", "project_type": "Electrical", "contractor": "AlphaConst", "location": "Chennai", "project_manager": "Amit Singh", "planned_duration_days": "130", "actual_duration_days": "154", "delay_days": "24", "overrun_pct": "18.5", "no_of_resources": "12", "budget_allocated": "1018745", "budget_spent": "895304", "site_inspections_done": "17", "weather_issues": "No", "contractor_rating": "2.5", "permit_delays": "1", "design_changes": "0", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1091", "project_type": "Civil", "contractor": "InfraPro", "location": "Delhi", "project_manager": "Neha Gupta", "planned_duration_days": "283", "actual_duration_days": "381", "delay_days": "98", "overrun_pct": "34.6", "no_of_resources": "9", "budget_allocated": "21509143", "budget_spent": "18462214", "site_inspections_done": "20", "weather_issues": "Yes", "contractor_rating": "3.1", "permit_delays": "1", "design_changes": "2", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1092", "project_type": "Infrastructure", "contractor": "AlphaConst", "location": "Delhi", "project_manager": "Neha Gupta", "planned_duration_days": "147", "actual_duration_days": "182", "delay_days": "35", "overrun_pct": "23.8", "no_of_resources": "49", "budget_allocated": "24783523", "budget_spent": "29695859", "site_inspections_done": "4", "weather_issues": "No", "contractor_rating": "3.1", "permit_delays": "1", "design_changes": "0", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1093", "project_type": "Infrastructure", "contractor": "InfraPro", "location": "Lucknow", "project_manager": "Priya Sharma", "planned_duration_days": "173", "actual_duration_days": "262", "delay_days": "89", "overrun_pct": "51.4", "no_of_resources": "9", "budget_allocated": "34757953", "budget_spent": "32829149", "site_inspections_done": "5", "weather_issues": "No", "contractor_rating": "4.2", "permit_delays": "2", "design_changes": "2", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1094", "project_type": "Electrical", "contractor": "MegaStruct", "location": "Lucknow", "project_manager": "Vikram Rao", "planned_duration_days": "191", "actual_duration_days": "310", "delay_days": "119", "overrun_pct": "62.3", "no_of_resources": "14", "budget_allocated": "44490465", "budget_spent": "49259697", "site_inspections_done": "4", "weather_issues": "Yes", "contractor_rating": "2.1", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1095", "project_type": "Structural", "contractor": "InfraPro", "location": "Hyderabad", "project_manager": "Neha Gupta", "planned_duration_days": "225", "actual_duration_days": "279", "delay_days": "54", "overrun_pct": "24.0", "no_of_resources": "9", "budget_allocated": "31968761", "budget_spent": "27654350", "site_inspections_done": "16", "weather_issues": "No", "contractor_rating": "2.0", "permit_delays": "0", "design_changes": "1", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1096", "project_type": "Infrastructure", "contractor": "TechBuild", "location": "Pune", "project_manager": "Vikram Rao", "planned_duration_days": "206", "actual_duration_days": "324", "delay_days": "118", "overrun_pct": "57.3", "no_of_resources": "10", "budget_allocated": "41772514", "budget_spent": "43453925", "site_inspections_done": "18", "weather_issues": "Yes", "contractor_rating": "3.8", "permit_delays": "1", "design_changes": "1", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1097", "project_type": "Electrical", "contractor": "MegaStruct", "location": "Chennai", "project_manager": "Vikram Rao", "planned_duration_days": "91", "actual_duration_days": "192", "delay_days": "101", "overrun_pct": "111.0", "no_of_resources": "26", "budget_allocated": "48436905", "budget_spent": "52986204", "site_inspections_done": "4", "weather_issues": "No", "contractor_rating": "1.9", "permit_delays": "2", "design_changes": "0", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1098", "project_type": "Infrastructure", "contractor": "MegaStruct", "location": "Pune", "project_manager": "Amit Singh", "planned_duration_days": "250", "actual_duration_days": "260", "delay_days": "10", "overrun_pct": "4.0", "no_of_resources": "26", "budget_allocated": "46060054", "budget_spent": "52485130", "site_inspections_done": "3", "weather_issues": "No", "contractor_rating": "2.9", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Low"}, {"project_id": "PRJ-1099", "project_type": "Structural", "contractor": "InfraPro", "location": "Chennai", "project_manager": "Neha Gupta", "planned_duration_days": "136", "actual_duration_days": "151", "delay_days": "15", "overrun_pct": "11.0", "no_of_resources": "47", "budget_allocated": "9991097", "budget_spent": "11064114", "site_inspections_done": "13", "weather_issues": "No", "contractor_rating": "1.8", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1100", "project_type": "Infrastructure", "contractor": "InfraPro", "location": "Noida", "project_manager": "Neha Gupta", "planned_duration_days": "125", "actual_duration_days": "148", "delay_days": "23", "overrun_pct": "18.4", "no_of_resources": "47", "budget_allocated": "28914320", "budget_spent": "26797852", "site_inspections_done": "18", "weather_issues": "No", "contractor_rating": "1.8", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1101", "project_type": "Electrical", "contractor": "AlphaConst", "location": "Hyderabad", "project_manager": "Priya Sharma", "planned_duration_days": "139", "actual_duration_days": "200", "delay_days": "61", "overrun_pct": "43.9", "no_of_resources": "11", "budget_allocated": "34570479", "budget_spent": "31628493", "site_inspections_done": "19", "weather_issues": "Yes", "contractor_rating": "2.5", "permit_delays": "2", "design_changes": "0", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1102", "project_type": "Structural", "contractor": "TechBuild", "location": "Chennai", "project_manager": "Priya Sharma", "planned_duration_days": "144", "actual_duration_days": "246", "delay_days": "102", "overrun_pct": "70.8", "no_of_resources": "28", "budget_allocated": "45889947", "budget_spent": "44687041", "site_inspections_done": "9", "weather_issues": "No", "contractor_rating": "1.7", "permit_delays": "1", "design_changes": "2", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1103", "project_type": "Mechanical", "contractor": "AlphaConst", "location": "Mumbai", "project_manager": "Amit Singh", "planned_duration_days": "159", "actual_duration_days": "181", "delay_days": "22", "overrun_pct": "13.8", "no_of_resources": "41", "budget_allocated": "30067991", "budget_spent": "26185369", "site_inspections_done": "16", "weather_issues": "No", "contractor_rating": "3.9", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1104", "project_type": "Mechanical", "contractor": "TechBuild", "location": "Noida", "project_manager": "Neha Gupta", "planned_duration_days": "250", "actual_duration_days": "258", "delay_days": "8", "overrun_pct": "3.2", "no_of_resources": "50", "budget_allocated": "35122092", "budget_spent": "31142247", "site_inspections_done": "5", "weather_issues": "No", "contractor_rating": "4.8", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Low"}, {"project_id": "PRJ-1105", "project_type": "Electrical", "contractor": "InfraPro", "location": "Mumbai", "project_manager": "Rajesh Kumar", "planned_duration_days": "290", "actual_duration_days": "345", "delay_days": "55", "overrun_pct": "19.0", "no_of_resources": "31", "budget_allocated": "4074009", "budget_spent": "3982238", "site_inspections_done": "14", "weather_issues": "No", "contractor_rating": "4.8", "permit_delays": "2", "design_changes": "1", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1106", "project_type": "Civil", "contractor": "InfraPro", "location": "Mumbai", "project_manager": "Priya Sharma", "planned_duration_days": "231", "actual_duration_days": "278", "delay_days": "47", "overrun_pct": "20.3", "no_of_resources": "23", "budget_allocated": "32205913", "budget_spent": "34444923", "site_inspections_done": "6", "weather_issues": "Yes", "contractor_rating": "2.0", "permit_delays": "1", "design_changes": "1", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1107", "project_type": "Structural", "contractor": "BuildCo", "location": "Delhi", "project_manager": "Neha Gupta", "planned_duration_days": "330", "actual_duration_days": "369", "delay_days": "39", "overrun_pct": "11.8", "no_of_resources": "23", "budget_allocated": "16447765", "budget_spent": "17906610", "site_inspections_done": "11", "weather_issues": "No", "contractor_rating": "1.9", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1108", "project_type": "Civil", "contractor": "TechBuild", "location": "Lucknow", "project_manager": "Rajesh Kumar", "planned_duration_days": "323", "actual_duration_days": "421", "delay_days": "98", "overrun_pct": "30.3", "no_of_resources": "14", "budget_allocated": "20046932", "budget_spent": "21237596", "site_inspections_done": "15", "weather_issues": "No", "contractor_rating": "2.3", "permit_delays": "0", "design_changes": "2", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1109", "project_type": "Infrastructure", "contractor": "InfraPro", "location": "Lucknow", "project_manager": "Rajesh Kumar", "planned_duration_days": "94", "actual_duration_days": "186", "delay_days": "92", "overrun_pct": "97.9", "no_of_resources": "37", "budget_allocated": "37688508", "budget_spent": "37418566", "site_inspections_done": "2", "weather_issues": "No", "contractor_rating": "3.4", "permit_delays": "1", "design_changes": "1", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1110", "project_type": "Civil", "contractor": "TechBuild", "location": "Noida", "project_manager": "Neha Gupta", "planned_duration_days": "236", "actual_duration_days": "267", "delay_days": "31", "overrun_pct": "13.1", "no_of_resources": "45", "budget_allocated": "7456764", "budget_spent": "9263744", "site_inspections_done": "20", "weather_issues": "Yes", "contractor_rating": "4.1", "permit_delays": "0", "design_changes": "0", "material_shortage": "Yes", "delay_risk": "Medium"}, {"project_id": "PRJ-1111", "project_type": "Mechanical", "contractor": "InfraPro", "location": "Chennai", "project_manager": "Neha Gupta", "planned_duration_days": "153", "actual_duration_days": "238", "delay_days": "85", "overrun_pct": "55.6", "no_of_resources": "34", "budget_allocated": "2981940", "budget_spent": "3714451", "site_inspections_done": "11", "weather_issues": "Yes", "contractor_rating": "1.7", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1112", "project_type": "Structural", "contractor": "MegaStruct", "location": "Hyderabad", "project_manager": "Neha Gupta", "planned_duration_days": "302", "actual_duration_days": "335", "delay_days": "33", "overrun_pct": "10.9", "no_of_resources": "46", "budget_allocated": "13324734", "budget_spent": "16094347", "site_inspections_done": "11", "weather_issues": "No", "contractor_rating": "1.6", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1113", "project_type": "Mechanical", "contractor": "AlphaConst", "location": "Pune", "project_manager": "Amit Singh", "planned_duration_days": "233", "actual_duration_days": "254", "delay_days": "21", "overrun_pct": "9.0", "no_of_resources": "36", "budget_allocated": "25152234", "budget_spent": "22411626", "site_inspections_done": "18", "weather_issues": "Yes", "contractor_rating": "3.2", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1114", "project_type": "Infrastructure", "contractor": "AlphaConst", "location": "Hyderabad", "project_manager": "Amit Singh", "planned_duration_days": "211", "actual_duration_days": "243", "delay_days": "32", "overrun_pct": "15.2", "no_of_resources": "50", "budget_allocated": "29096165", "budget_spent": "32174182", "site_inspections_done": "7", "weather_issues": "No", "contractor_rating": "3.1", "permit_delays": "1", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1115", "project_type": "Civil", "contractor": "TechBuild", "location": "Noida", "project_manager": "Amit Singh", "planned_duration_days": "98", "actual_duration_days": "112", "delay_days": "14", "overrun_pct": "14.3", "no_of_resources": "48", "budget_allocated": "11236527", "budget_spent": "11178774", "site_inspections_done": "2", "weather_issues": "No", "contractor_rating": "2.8", "permit_delays": "0", "design_changes": "2", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1116", "project_type": "Structural", "contractor": "InfraPro", "location": "Lucknow", "project_manager": "Amit Singh", "planned_duration_days": "76", "actual_duration_days": "171", "delay_days": "95", "overrun_pct": "125.0", "no_of_resources": "33", "budget_allocated": "25395006", "budget_spent": "24121311", "site_inspections_done": "13", "weather_issues": "No", "contractor_rating": "2.0", "permit_delays": "1", "design_changes": "0", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1117", "project_type": "Civil", "contractor": "MegaStruct", "location": "Mumbai", "project_manager": "Rajesh Kumar", "planned_duration_days": "73", "actual_duration_days": "101", "delay_days": "28", "overrun_pct": "38.4", "no_of_resources": "29", "budget_allocated": "38193217", "budget_spent": "34537796", "site_inspections_done": "5", "weather_issues": "Yes", "contractor_rating": "3.2", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1118", "project_type": "Civil", "contractor": "TechBuild", "location": "Noida", "project_manager": "Amit Singh", "planned_duration_days": "291", "actual_duration_days": "311", "delay_days": "20", "overrun_pct": "6.9", "no_of_resources": "33", "budget_allocated": "6391536", "budget_spent": "6733498", "site_inspections_done": "12", "weather_issues": "Yes", "contractor_rating": "4.6", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1119", "project_type": "Civil", "contractor": "TechBuild", "location": "Chennai", "project_manager": "Rajesh Kumar", "planned_duration_days": "162", "actual_duration_days": "277", "delay_days": "115", "overrun_pct": "71.0", "no_of_resources": "36", "budget_allocated": "2263891", "budget_spent": "1983846", "site_inspections_done": "13", "weather_issues": "Yes", "contractor_rating": "2.3", "permit_delays": "2", "design_changes": "2", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1120", "project_type": "Mechanical", "contractor": "InfraPro", "location": "Mumbai", "project_manager": "Vikram Rao", "planned_duration_days": "305", "actual_duration_days": "416", "delay_days": "111", "overrun_pct": "36.4", "no_of_resources": "31", "budget_allocated": "39080920", "budget_spent": "43220276", "site_inspections_done": "4", "weather_issues": "No", "contractor_rating": "2.9", "permit_delays": "0", "design_changes": "1", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1121", "project_type": "Electrical", "contractor": "InfraPro", "location": "Chennai", "project_manager": "Amit Singh", "planned_duration_days": "126", "actual_duration_days": "150", "delay_days": "24", "overrun_pct": "19.0", "no_of_resources": "8", "budget_allocated": "8832311", "budget_spent": "10496084", "site_inspections_done": "18", "weather_issues": "No", "contractor_rating": "3.3", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1122", "project_type": "Infrastructure", "contractor": "TechBuild", "location": "Lucknow", "project_manager": "Vikram Rao", "planned_duration_days": "160", "actual_duration_days": "179", "delay_days": "19", "overrun_pct": "11.9", "no_of_resources": "45", "budget_allocated": "20822215", "budget_spent": "23700951", "site_inspections_done": "19", "weather_issues": "No", "contractor_rating": "2.5", "permit_delays": "0", "design_changes": "2", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1123", "project_type": "Structural", "contractor": "AlphaConst", "location": "Lucknow", "project_manager": "Rajesh Kumar", "planned_duration_days": "232", "actual_duration_days": "330", "delay_days": "98", "overrun_pct": "42.2", "no_of_resources": "6", "budget_allocated": "5950773", "budget_spent": "6243642", "site_inspections_done": "3", "weather_issues": "No", "contractor_rating": "1.6", "permit_delays": "2", "design_changes": "1", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1124", "project_type": "Structural", "contractor": "MegaStruct", "location": "Hyderabad", "project_manager": "Priya Sharma", "planned_duration_days": "208", "actual_duration_days": "244", "delay_days": "36", "overrun_pct": "17.3", "no_of_resources": "48", "budget_allocated": "27752408", "budget_spent": "27366012", "site_inspections_done": "11", "weather_issues": "No", "contractor_rating": "3.2", "permit_delays": "1", "design_changes": "0", "material_shortage": "Yes", "delay_risk": "Medium"}, {"project_id": "PRJ-1125", "project_type": "Electrical", "contractor": "BuildCo", "location": "Pune", "project_manager": "Neha Gupta", "planned_duration_days": "220", "actual_duration_days": "259", "delay_days": "39", "overrun_pct": "17.7", "no_of_resources": "27", "budget_allocated": "27257418", "budget_spent": "25871857", "site_inspections_done": "6", "weather_issues": "No", "contractor_rating": "4.1", "permit_delays": "0", "design_changes": "2", "material_shortage": "Yes", "delay_risk": "Medium"}, {"project_id": "PRJ-1126", "project_type": "Civil", "contractor": "MegaStruct", "location": "Chennai", "project_manager": "Neha Gupta", "planned_duration_days": "85", "actual_duration_days": "87", "delay_days": "2", "overrun_pct": "2.4", "no_of_resources": "44", "budget_allocated": "28560547", "budget_spent": "29974405", "site_inspections_done": "9", "weather_issues": "No", "contractor_rating": "4.8", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Low"}, {"project_id": "PRJ-1127", "project_type": "Infrastructure", "contractor": "MegaStruct", "location": "Chennai", "project_manager": "Neha Gupta", "planned_duration_days": "314", "actual_duration_days": "342", "delay_days": "28", "overrun_pct": "8.9", "no_of_resources": "30", "budget_allocated": "34419803", "budget_spent": "33190994", "site_inspections_done": "16", "weather_issues": "Yes", "contractor_rating": "1.8", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1128", "project_type": "Civil", "contractor": "AlphaConst", "location": "Mumbai", "project_manager": "Amit Singh", "planned_duration_days": "115", "actual_duration_days": "232", "delay_days": "117", "overrun_pct": "101.7", "no_of_resources": "21", "budget_allocated": "49322239", "budget_spent": "52838381", "site_inspections_done": "13", "weather_issues": "No", "contractor_rating": "2.0", "permit_delays": "1", "design_changes": "1", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1129", "project_type": "Civil", "contractor": "AlphaConst", "location": "Pune", "project_manager": "Priya Sharma", "planned_duration_days": "257", "actual_duration_days": "262", "delay_days": "5", "overrun_pct": "1.9", "no_of_resources": "40", "budget_allocated": "19271736", "budget_spent": "17915452", "site_inspections_done": "5", "weather_issues": "No", "contractor_rating": "3.1", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Low"}, {"project_id": "PRJ-1130", "project_type": "Structural", "contractor": "TechBuild", "location": "Pune", "project_manager": "Vikram Rao", "planned_duration_days": "265", "actual_duration_days": "375", "delay_days": "110", "overrun_pct": "41.5", "no_of_resources": "7", "budget_allocated": "9696355", "budget_spent": "9477334", "site_inspections_done": "12", "weather_issues": "No", "contractor_rating": "1.6", "permit_delays": "1", "design_changes": "2", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1131", "project_type": "Mechanical", "contractor": "InfraPro", "location": "Lucknow", "project_manager": "Rajesh Kumar", "planned_duration_days": "213", "actual_duration_days": "305", "delay_days": "92", "overrun_pct": "43.2", "no_of_resources": "37", "budget_allocated": "36224721", "budget_spent": "44989626", "site_inspections_done": "17", "weather_issues": "No", "contractor_rating": "2.7", "permit_delays": "2", "design_changes": "1", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1132", "project_type": "Structural", "contractor": "AlphaConst", "location": "Lucknow", "project_manager": "Vikram Rao", "planned_duration_days": "217", "actual_duration_days": "283", "delay_days": "66", "overrun_pct": "30.4", "no_of_resources": "21", "budget_allocated": "44495965", "budget_spent": "51608309", "site_inspections_done": "20", "weather_issues": "Yes", "contractor_rating": "3.6", "permit_delays": "2", "design_changes": "0", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1133", "project_type": "Mechanical", "contractor": "TechBuild", "location": "Hyderabad", "project_manager": "Vikram Rao", "planned_duration_days": "135", "actual_duration_days": "232", "delay_days": "97", "overrun_pct": "71.9", "no_of_resources": "49", "budget_allocated": "7874963", "budget_spent": "9134870", "site_inspections_done": "8", "weather_issues": "Yes", "contractor_rating": "1.6", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1134", "project_type": "Mechanical", "contractor": "AlphaConst", "location": "Pune", "project_manager": "Vikram Rao", "planned_duration_days": "91", "actual_duration_days": "194", "delay_days": "103", "overrun_pct": "113.2", "no_of_resources": "40", "budget_allocated": "22313704", "budget_spent": "22128830", "site_inspections_done": "17", "weather_issues": "Yes", "contractor_rating": "3.3", "permit_delays": "2", "design_changes": "1", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1135", "project_type": "Infrastructure", "contractor": "InfraPro", "location": "Hyderabad", "project_manager": "Amit Singh", "planned_duration_days": "307", "actual_duration_days": "348", "delay_days": "41", "overrun_pct": "13.4", "no_of_resources": "22", "budget_allocated": "37952561", "budget_spent": "40768453", "site_inspections_done": "11", "weather_issues": "Yes", "contractor_rating": "4.9", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1136", "project_type": "Infrastructure", "contractor": "InfraPro", "location": "Hyderabad", "project_manager": "Amit Singh", "planned_duration_days": "207", "actual_duration_days": "208", "delay_days": "1", "overrun_pct": "0.5", "no_of_resources": "39", "budget_allocated": "25980845", "budget_spent": "29850313", "site_inspections_done": "14", "weather_issues": "Yes", "contractor_rating": "3.5", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Low"}, {"project_id": "PRJ-1137", "project_type": "Electrical", "contractor": "TechBuild", "location": "Lucknow", "project_manager": "Priya Sharma", "planned_duration_days": "163", "actual_duration_days": "206", "delay_days": "43", "overrun_pct": "26.4", "no_of_resources": "40", "budget_allocated": "47219265", "budget_spent": "41127812", "site_inspections_done": "10", "weather_issues": "No", "contractor_rating": "2.4", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1138", "project_type": "Mechanical", "contractor": "InfraPro", "location": "Pune", "project_manager": "Amit Singh", "planned_duration_days": "229", "actual_duration_days": "251", "delay_days": "22", "overrun_pct": "9.6", "no_of_resources": "13", "budget_allocated": "847720", "budget_spent": "939578", "site_inspections_done": "19", "weather_issues": "No", "contractor_rating": "1.9", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1139", "project_type": "Civil", "contractor": "InfraPro", "location": "Delhi", "project_manager": "Rajesh Kumar", "planned_duration_days": "353", "actual_duration_days": "421", "delay_days": "68", "overrun_pct": "19.3", "no_of_resources": "7", "budget_allocated": "12248398", "budget_spent": "11873069", "site_inspections_done": "15", "weather_issues": "Yes", "contractor_rating": "3.4", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1140", "project_type": "Structural", "contractor": "InfraPro", "location": "Mumbai", "project_manager": "Neha Gupta", "planned_duration_days": "114", "actual_duration_days": "131", "delay_days": "17", "overrun_pct": "14.9", "no_of_resources": "46", "budget_allocated": "36960278", "budget_spent": "41000559", "site_inspections_done": "18", "weather_issues": "No", "contractor_rating": "2.5", "permit_delays": "1", "design_changes": "0", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1141", "project_type": "Electrical", "contractor": "InfraPro", "location": "Delhi", "project_manager": "Neha Gupta", "planned_duration_days": "67", "actual_duration_days": "109", "delay_days": "42", "overrun_pct": "62.7", "no_of_resources": "41", "budget_allocated": "45758294", "budget_spent": "51144152", "site_inspections_done": "8", "weather_issues": "No", "contractor_rating": "4.3", "permit_delays": "0", "design_changes": "2", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1142", "project_type": "Electrical", "contractor": "InfraPro", "location": "Chennai", "project_manager": "Vikram Rao", "planned_duration_days": "131", "actual_duration_days": "162", "delay_days": "31", "overrun_pct": "23.7", "no_of_resources": "20", "budget_allocated": "958361", "budget_spent": "818991", "site_inspections_done": "10", "weather_issues": "No", "contractor_rating": "2.6", "permit_delays": "1", "design_changes": "0", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1143", "project_type": "Infrastructure", "contractor": "InfraPro", "location": "Chennai", "project_manager": "Priya Sharma", "planned_duration_days": "180", "actual_duration_days": "262", "delay_days": "82", "overrun_pct": "45.6", "no_of_resources": "34", "budget_allocated": "21089425", "budget_spent": "19774530", "site_inspections_done": "7", "weather_issues": "Yes", "contractor_rating": "3.8", "permit_delays": "1", "design_changes": "2", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1144", "project_type": "Electrical", "contractor": "AlphaConst", "location": "Hyderabad", "project_manager": "Vikram Rao", "planned_duration_days": "304", "actual_duration_days": "359", "delay_days": "55", "overrun_pct": "18.1", "no_of_resources": "43", "budget_allocated": "25573538", "budget_spent": "28936623", "site_inspections_done": "15", "weather_issues": "Yes", "contractor_rating": "3.1", "permit_delays": "2", "design_changes": "1", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1145", "project_type": "Civil", "contractor": "MegaStruct", "location": "Delhi", "project_manager": "Priya Sharma", "planned_duration_days": "348", "actual_duration_days": "459", "delay_days": "111", "overrun_pct": "31.9", "no_of_resources": "40", "budget_allocated": "34422662", "budget_spent": "39130553", "site_inspections_done": "8", "weather_issues": "Yes", "contractor_rating": "1.7", "permit_delays": "2", "design_changes": "2", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1146", "project_type": "Mechanical", "contractor": "MegaStruct", "location": "Lucknow", "project_manager": "Amit Singh", "planned_duration_days": "106", "actual_duration_days": "222", "delay_days": "116", "overrun_pct": "109.4", "no_of_resources": "8", "budget_allocated": "30929326", "budget_spent": "35238153", "site_inspections_done": "6", "weather_issues": "No", "contractor_rating": "3.1", "permit_delays": "2", "design_changes": "1", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1147", "project_type": "Mechanical", "contractor": "BuildCo", "location": "Hyderabad", "project_manager": "Rajesh Kumar", "planned_duration_days": "190", "actual_duration_days": "242", "delay_days": "52", "overrun_pct": "27.4", "no_of_resources": "42", "budget_allocated": "5400928", "budget_spent": "5211011", "site_inspections_done": "3", "weather_issues": "Yes", "contractor_rating": "4.1", "permit_delays": "1", "design_changes": "1", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1148", "project_type": "Electrical", "contractor": "BuildCo", "location": "Mumbai", "project_manager": "Vikram Rao", "planned_duration_days": "129", "actual_duration_days": "161", "delay_days": "32", "overrun_pct": "24.8", "no_of_resources": "29", "budget_allocated": "30600817", "budget_spent": "30821861", "site_inspections_done": "14", "weather_issues": "No", "contractor_rating": "2.8", "permit_delays": "1", "design_changes": "0", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1149", "project_type": "Electrical", "contractor": "MegaStruct", "location": "Pune", "project_manager": "Priya Sharma", "planned_duration_days": "174", "actual_duration_days": "250", "delay_days": "76", "overrun_pct": "43.7", "no_of_resources": "24", "budget_allocated": "31571665", "budget_spent": "30317004", "site_inspections_done": "19", "weather_issues": "Yes", "contractor_rating": "4.1", "permit_delays": "1", "design_changes": "2", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1150", "project_type": "Civil", "contractor": "TechBuild", "location": "Lucknow", "project_manager": "Rajesh Kumar", "planned_duration_days": "76", "actual_duration_days": "89", "delay_days": "13", "overrun_pct": "17.1", "no_of_resources": "6", "budget_allocated": "16650841", "budget_spent": "16832437", "site_inspections_done": "8", "weather_issues": "No", "contractor_rating": "3.7", "permit_delays": "0", "design_changes": "0", "material_shortage": "Yes", "delay_risk": "Medium"}, {"project_id": "PRJ-1151", "project_type": "Electrical", "contractor": "TechBuild", "location": "Pune", "project_manager": "Priya Sharma", "planned_duration_days": "336", "actual_duration_days": "366", "delay_days": "30", "overrun_pct": "8.9", "no_of_resources": "8", "budget_allocated": "9904339", "budget_spent": "12323753", "site_inspections_done": "18", "weather_issues": "Yes", "contractor_rating": "4.1", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1152", "project_type": "Structural", "contractor": "MegaStruct", "location": "Noida", "project_manager": "Vikram Rao", "planned_duration_days": "173", "actual_duration_days": "205", "delay_days": "32", "overrun_pct": "18.5", "no_of_resources": "8", "budget_allocated": "37860720", "budget_spent": "37008618", "site_inspections_done": "20", "weather_issues": "No", "contractor_rating": "2.6", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1153", "project_type": "Mechanical", "contractor": "MegaStruct", "location": "Delhi", "project_manager": "Vikram Rao", "planned_duration_days": "269", "actual_duration_days": "288", "delay_days": "19", "overrun_pct": "7.1", "no_of_resources": "16", "budget_allocated": "36599754", "budget_spent": "37151349", "site_inspections_done": "17", "weather_issues": "Yes", "contractor_rating": "2.5", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1154", "project_type": "Mechanical", "contractor": "AlphaConst", "location": "Lucknow", "project_manager": "Priya Sharma", "planned_duration_days": "345", "actual_duration_days": "360", "delay_days": "15", "overrun_pct": "4.3", "no_of_resources": "20", "budget_allocated": "17612468", "budget_spent": "15333673", "site_inspections_done": "8", "weather_issues": "No", "contractor_rating": "2.0", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1155", "project_type": "Mechanical", "contractor": "InfraPro", "location": "Delhi", "project_manager": "Priya Sharma", "planned_duration_days": "80", "actual_duration_days": "167", "delay_days": "87", "overrun_pct": "108.7", "no_of_resources": "42", "budget_allocated": "49107301", "budget_spent": "60149760", "site_inspections_done": "19", "weather_issues": "Yes", "contractor_rating": "2.2", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1156", "project_type": "Civil", "contractor": "MegaStruct", "location": "Chennai", "project_manager": "Amit Singh", "planned_duration_days": "305", "actual_duration_days": "398", "delay_days": "93", "overrun_pct": "30.5", "no_of_resources": "50", "budget_allocated": "14224644", "budget_spent": "13845826", "site_inspections_done": "14", "weather_issues": "Yes", "contractor_rating": "3.9", "permit_delays": "0", "design_changes": "2", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1157", "project_type": "Infrastructure", "contractor": "TechBuild", "location": "Delhi", "project_manager": "Amit Singh", "planned_duration_days": "322", "actual_duration_days": "325", "delay_days": "3", "overrun_pct": "0.9", "no_of_resources": "35", "budget_allocated": "21990491", "budget_spent": "23558955", "site_inspections_done": "8", "weather_issues": "No", "contractor_rating": "3.1", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Low"}, {"project_id": "PRJ-1158", "project_type": "Structural", "contractor": "InfraPro", "location": "Noida", "project_manager": "Neha Gupta", "planned_duration_days": "356", "actual_duration_days": "444", "delay_days": "88", "overrun_pct": "24.7", "no_of_resources": "17", "budget_allocated": "22636884", "budget_spent": "27992846", "site_inspections_done": "9", "weather_issues": "No", "contractor_rating": "2.5", "permit_delays": "1", "design_changes": "2", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1159", "project_type": "Mechanical", "contractor": "BuildCo", "location": "Chennai", "project_manager": "Rajesh Kumar", "planned_duration_days": "295", "actual_duration_days": "409", "delay_days": "114", "overrun_pct": "38.6", "no_of_resources": "27", "budget_allocated": "11859229", "budget_spent": "14060627", "site_inspections_done": "6", "weather_issues": "Yes", "contractor_rating": "4.1", "permit_delays": "2", "design_changes": "1", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1160", "project_type": "Civil", "contractor": "BuildCo", "location": "Chennai", "project_manager": "Vikram Rao", "planned_duration_days": "84", "actual_duration_days": "117", "delay_days": "33", "overrun_pct": "39.3", "no_of_resources": "45", "budget_allocated": "16031232", "budget_spent": "19479559", "site_inspections_done": "4", "weather_issues": "Yes", "contractor_rating": "2.9", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1161", "project_type": "Mechanical", "contractor": "TechBuild", "location": "Delhi", "project_manager": "Rajesh Kumar", "planned_duration_days": "68", "actual_duration_days": "168", "delay_days": "100", "overrun_pct": "147.1", "no_of_resources": "31", "budget_allocated": "1295305", "budget_spent": "1372705", "site_inspections_done": "2", "weather_issues": "Yes", "contractor_rating": "3.4", "permit_delays": "2", "design_changes": "1", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1162", "project_type": "Electrical", "contractor": "TechBuild", "location": "Pune", "project_manager": "Rajesh Kumar", "planned_duration_days": "158", "actual_duration_days": "183", "delay_days": "25", "overrun_pct": "15.8", "no_of_resources": "27", "budget_allocated": "18439859", "budget_spent": "20495798", "site_inspections_done": "14", "weather_issues": "No", "contractor_rating": "3.3", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1163", "project_type": "Civil", "contractor": "InfraPro", "location": "Chennai", "project_manager": "Rajesh Kumar", "planned_duration_days": "107", "actual_duration_days": "144", "delay_days": "37", "overrun_pct": "34.6", "no_of_resources": "40", "budget_allocated": "32444161", "budget_spent": "39189837", "site_inspections_done": "3", "weather_issues": "No", "contractor_rating": "2.8", "permit_delays": "0", "design_changes": "0", "material_shortage": "Yes", "delay_risk": "Medium"}, {"project_id": "PRJ-1164", "project_type": "Civil", "contractor": "AlphaConst", "location": "Chennai", "project_manager": "Rajesh Kumar", "planned_duration_days": "177", "actual_duration_days": "204", "delay_days": "27", "overrun_pct": "15.3", "no_of_resources": "49", "budget_allocated": "38536240", "budget_spent": "35520463", "site_inspections_done": "17", "weather_issues": "Yes", "contractor_rating": "4.7", "permit_delays": "0", "design_changes": "0", "material_shortage": "Yes", "delay_risk": "Medium"}, {"project_id": "PRJ-1165", "project_type": "Infrastructure", "contractor": "AlphaConst", "location": "Pune", "project_manager": "Neha Gupta", "planned_duration_days": "68", "actual_duration_days": "102", "delay_days": "34", "overrun_pct": "50.0", "no_of_resources": "50", "budget_allocated": "27229193", "budget_spent": "31374666", "site_inspections_done": "4", "weather_issues": "Yes", "contractor_rating": "3.6", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1166", "project_type": "Electrical", "contractor": "InfraPro", "location": "Delhi", "project_manager": "Amit Singh", "planned_duration_days": "100", "actual_duration_days": "135", "delay_days": "35", "overrun_pct": "35.0", "no_of_resources": "27", "budget_allocated": "4103506", "budget_spent": "4774098", "site_inspections_done": "5", "weather_issues": "No", "contractor_rating": "4.1", "permit_delays": "1", "design_changes": "0", "material_shortage": "Yes", "delay_risk": "Medium"}, {"project_id": "PRJ-1167", "project_type": "Mechanical", "contractor": "TechBuild", "location": "Lucknow", "project_manager": "Rajesh Kumar", "planned_duration_days": "311", "actual_duration_days": "393", "delay_days": "82", "overrun_pct": "26.4", "no_of_resources": "29", "budget_allocated": "29480825", "budget_spent": "26026121", "site_inspections_done": "7", "weather_issues": "Yes", "contractor_rating": "2.7", "permit_delays": "2", "design_changes": "1", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1168", "project_type": "Electrical", "contractor": "BuildCo", "location": "Mumbai", "project_manager": "Rajesh Kumar", "planned_duration_days": "254", "actual_duration_days": "258", "delay_days": "4", "overrun_pct": "1.6", "no_of_resources": "25", "budget_allocated": "24706182", "budget_spent": "22852149", "site_inspections_done": "5", "weather_issues": "Yes", "contractor_rating": "4.1", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Low"}, {"project_id": "PRJ-1169", "project_type": "Mechanical", "contractor": "MegaStruct", "location": "Delhi", "project_manager": "Amit Singh", "planned_duration_days": "345", "actual_duration_days": "431", "delay_days": "86", "overrun_pct": "24.9", "no_of_resources": "11", "budget_allocated": "2262406", "budget_spent": "2297528", "site_inspections_done": "4", "weather_issues": "No", "contractor_rating": "3.3", "permit_delays": "0", "design_changes": "2", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1170", "project_type": "Civil", "contractor": "TechBuild", "location": "Delhi", "project_manager": "Priya Sharma", "planned_duration_days": "346", "actual_duration_days": "353", "delay_days": "7", "overrun_pct": "2.0", "no_of_resources": "15", "budget_allocated": "46490777", "budget_spent": "47600535", "site_inspections_done": "14", "weather_issues": "Yes", "contractor_rating": "3.5", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Low"}, {"project_id": "PRJ-1171", "project_type": "Mechanical", "contractor": "InfraPro", "location": "Delhi", "project_manager": "Neha Gupta", "planned_duration_days": "213", "actual_duration_days": "231", "delay_days": "18", "overrun_pct": "8.5", "no_of_resources": "28", "budget_allocated": "17391283", "budget_spent": "17093664", "site_inspections_done": "9", "weather_issues": "No", "contractor_rating": "4.2", "permit_delays": "1", "design_changes": "2", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1172", "project_type": "Structural", "contractor": "MegaStruct", "location": "Pune", "project_manager": "Amit Singh", "planned_duration_days": "254", "actual_duration_days": "275", "delay_days": "21", "overrun_pct": "8.3", "no_of_resources": "32", "budget_allocated": "44190343", "budget_spent": "50551532", "site_inspections_done": "6", "weather_issues": "No", "contractor_rating": "3.0", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1173", "project_type": "Mechanical", "contractor": "TechBuild", "location": "Lucknow", "project_manager": "Vikram Rao", "planned_duration_days": "354", "actual_duration_days": "468", "delay_days": "114", "overrun_pct": "32.2", "no_of_resources": "22", "budget_allocated": "26869430", "budget_spent": "23128304", "site_inspections_done": "13", "weather_issues": "Yes", "contractor_rating": "2.6", "permit_delays": "0", "design_changes": "2", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1174", "project_type": "Mechanical", "contractor": "TechBuild", "location": "Lucknow", "project_manager": "Neha Gupta", "planned_duration_days": "167", "actual_duration_days": "177", "delay_days": "10", "overrun_pct": "6.0", "no_of_resources": "49", "budget_allocated": "5141159", "budget_spent": "5992693", "site_inspections_done": "15", "weather_issues": "No", "contractor_rating": "4.3", "permit_delays": "1", "design_changes": "0", "material_shortage": "No", "delay_risk": "Low"}, {"project_id": "PRJ-1175", "project_type": "Civil", "contractor": "AlphaConst", "location": "Chennai", "project_manager": "Rajesh Kumar", "planned_duration_days": "289", "actual_duration_days": "380", "delay_days": "91", "overrun_pct": "31.5", "no_of_resources": "30", "budget_allocated": "36360789", "budget_spent": "32497374", "site_inspections_done": "18", "weather_issues": "No", "contractor_rating": "3.2", "permit_delays": "1", "design_changes": "2", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1176", "project_type": "Electrical", "contractor": "TechBuild", "location": "Chennai", "project_manager": "Vikram Rao", "planned_duration_days": "241", "actual_duration_days": "319", "delay_days": "78", "overrun_pct": "32.4", "no_of_resources": "7", "budget_allocated": "38297073", "budget_spent": "41100318", "site_inspections_done": "14", "weather_issues": "Yes", "contractor_rating": "3.8", "permit_delays": "0", "design_changes": "1", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1177", "project_type": "Structural", "contractor": "BuildCo", "location": "Pune", "project_manager": "Neha Gupta", "planned_duration_days": "173", "actual_duration_days": "279", "delay_days": "106", "overrun_pct": "61.3", "no_of_resources": "34", "budget_allocated": "46104196", "budget_spent": "56165008", "site_inspections_done": "20", "weather_issues": "No", "contractor_rating": "2.8", "permit_delays": "2", "design_changes": "0", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1178", "project_type": "Civil", "contractor": "MegaStruct", "location": "Pune", "project_manager": "Rajesh Kumar", "planned_duration_days": "119", "actual_duration_days": "220", "delay_days": "101", "overrun_pct": "84.9", "no_of_resources": "26", "budget_allocated": "31056855", "budget_spent": "30128430", "site_inspections_done": "8", "weather_issues": "Yes", "contractor_rating": "2.7", "permit_delays": "2", "design_changes": "1", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1179", "project_type": "Civil", "contractor": "MegaStruct", "location": "Mumbai", "project_manager": "Neha Gupta", "planned_duration_days": "71", "actual_duration_days": "108", "delay_days": "37", "overrun_pct": "52.1", "no_of_resources": "48", "budget_allocated": "11529616", "budget_spent": "12704531", "site_inspections_done": "9", "weather_issues": "No", "contractor_rating": "3.8", "permit_delays": "2", "design_changes": "0", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1180", "project_type": "Electrical", "contractor": "TechBuild", "location": "Pune", "project_manager": "Rajesh Kumar", "planned_duration_days": "281", "actual_duration_days": "353", "delay_days": "72", "overrun_pct": "25.6", "no_of_resources": "44", "budget_allocated": "13742218", "budget_spent": "14854502", "site_inspections_done": "16", "weather_issues": "No", "contractor_rating": "1.6", "permit_delays": "2", "design_changes": "1", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1181", "project_type": "Structural", "contractor": "AlphaConst", "location": "Delhi", "project_manager": "Amit Singh", "planned_duration_days": "155", "actual_duration_days": "250", "delay_days": "95", "overrun_pct": "61.3", "no_of_resources": "34", "budget_allocated": "8147388", "budget_spent": "8072383", "site_inspections_done": "10", "weather_issues": "No", "contractor_rating": "2.6", "permit_delays": "1", "design_changes": "2", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1182", "project_type": "Mechanical", "contractor": "InfraPro", "location": "Lucknow", "project_manager": "Priya Sharma", "planned_duration_days": "148", "actual_duration_days": "150", "delay_days": "2", "overrun_pct": "1.4", "no_of_resources": "42", "budget_allocated": "6187608", "budget_spent": "6523780", "site_inspections_done": "6", "weather_issues": "No", "contractor_rating": "4.7", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Low"}, {"project_id": "PRJ-1183", "project_type": "Mechanical", "contractor": "TechBuild", "location": "Pune", "project_manager": "Neha Gupta", "planned_duration_days": "365", "actual_duration_days": "427", "delay_days": "62", "overrun_pct": "17.0", "no_of_resources": "32", "budget_allocated": "12965719", "budget_spent": "14233299", "site_inspections_done": "17", "weather_issues": "Yes", "contractor_rating": "3.5", "permit_delays": "2", "design_changes": "0", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1184", "project_type": "Infrastructure", "contractor": "MegaStruct", "location": "Mumbai", "project_manager": "Rajesh Kumar", "planned_duration_days": "64", "actual_duration_days": "165", "delay_days": "101", "overrun_pct": "157.8", "no_of_resources": "29", "budget_allocated": "38187135", "budget_spent": "41095434", "site_inspections_done": "18", "weather_issues": "No", "contractor_rating": "2.0", "permit_delays": "1", "design_changes": "1", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1185", "project_type": "Electrical", "contractor": "AlphaConst", "location": "Delhi", "project_manager": "Amit Singh", "planned_duration_days": "209", "actual_duration_days": "268", "delay_days": "59", "overrun_pct": "28.2", "no_of_resources": "39", "budget_allocated": "19872336", "budget_spent": "23052808", "site_inspections_done": "7", "weather_issues": "Yes", "contractor_rating": "2.5", "permit_delays": "1", "design_changes": "2", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1186", "project_type": "Infrastructure", "contractor": "MegaStruct", "location": "Pune", "project_manager": "Amit Singh", "planned_duration_days": "337", "actual_duration_days": "349", "delay_days": "12", "overrun_pct": "3.6", "no_of_resources": "33", "budget_allocated": "37165147", "budget_spent": "44407885", "site_inspections_done": "8", "weather_issues": "Yes", "contractor_rating": "4.2", "permit_delays": "1", "design_changes": "0", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1187", "project_type": "Civil", "contractor": "TechBuild", "location": "Noida", "project_manager": "Priya Sharma", "planned_duration_days": "284", "actual_duration_days": "302", "delay_days": "18", "overrun_pct": "6.3", "no_of_resources": "20", "budget_allocated": "14584685", "budget_spent": "17095821", "site_inspections_done": "20", "weather_issues": "Yes", "contractor_rating": "4.2", "permit_delays": "0", "design_changes": "2", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1188", "project_type": "Structural", "contractor": "BuildCo", "location": "Mumbai", "project_manager": "Neha Gupta", "planned_duration_days": "239", "actual_duration_days": "281", "delay_days": "42", "overrun_pct": "17.6", "no_of_resources": "39", "budget_allocated": "11799613", "budget_spent": "14366117", "site_inspections_done": "12", "weather_issues": "No", "contractor_rating": "2.5", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1189", "project_type": "Infrastructure", "contractor": "MegaStruct", "location": "Hyderabad", "project_manager": "Neha Gupta", "planned_duration_days": "124", "actual_duration_days": "203", "delay_days": "79", "overrun_pct": "63.7", "no_of_resources": "50", "budget_allocated": "22115544", "budget_spent": "19466246", "site_inspections_done": "9", "weather_issues": "Yes", "contractor_rating": "2.4", "permit_delays": "1", "design_changes": "1", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1190", "project_type": "Civil", "contractor": "MegaStruct", "location": "Lucknow", "project_manager": "Amit Singh", "planned_duration_days": "266", "actual_duration_days": "322", "delay_days": "56", "overrun_pct": "21.1", "no_of_resources": "49", "budget_allocated": "25267947", "budget_spent": "30069931", "site_inspections_done": "16", "weather_issues": "No", "contractor_rating": "4.1", "permit_delays": "1", "design_changes": "1", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1191", "project_type": "Structural", "contractor": "AlphaConst", "location": "Noida", "project_manager": "Neha Gupta", "planned_duration_days": "263", "actual_duration_days": "281", "delay_days": "18", "overrun_pct": "6.8", "no_of_resources": "18", "budget_allocated": "33699758", "budget_spent": "39271051", "site_inspections_done": "10", "weather_issues": "Yes", "contractor_rating": "4.9", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1192", "project_type": "Civil", "contractor": "TechBuild", "location": "Lucknow", "project_manager": "Priya Sharma", "planned_duration_days": "83", "actual_duration_days": "120", "delay_days": "37", "overrun_pct": "44.6", "no_of_resources": "34", "budget_allocated": "1592623", "budget_spent": "1915701", "site_inspections_done": "5", "weather_issues": "Yes", "contractor_rating": "3.7", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1193", "project_type": "Infrastructure", "contractor": "TechBuild", "location": "Hyderabad", "project_manager": "Rajesh Kumar", "planned_duration_days": "141", "actual_duration_days": "225", "delay_days": "84", "overrun_pct": "59.6", "no_of_resources": "28", "budget_allocated": "17303340", "budget_spent": "19578370", "site_inspections_done": "4", "weather_issues": "No", "contractor_rating": "1.8", "permit_delays": "0", "design_changes": "0", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1194", "project_type": "Civil", "contractor": "MegaStruct", "location": "Lucknow", "project_manager": "Priya Sharma", "planned_duration_days": "169", "actual_duration_days": "229", "delay_days": "60", "overrun_pct": "35.5", "no_of_resources": "42", "budget_allocated": "15679411", "budget_spent": "16323523", "site_inspections_done": "18", "weather_issues": "No", "contractor_rating": "1.8", "permit_delays": "1", "design_changes": "0", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1195", "project_type": "Electrical", "contractor": "TechBuild", "location": "Delhi", "project_manager": "Vikram Rao", "planned_duration_days": "256", "actual_duration_days": "274", "delay_days": "18", "overrun_pct": "7.0", "no_of_resources": "11", "budget_allocated": "7425737", "budget_spent": "7985017", "site_inspections_done": "12", "weather_issues": "Yes", "contractor_rating": "4.1", "permit_delays": "0", "design_changes": "1", "material_shortage": "No", "delay_risk": "Medium"}, {"project_id": "PRJ-1196", "project_type": "Structural", "contractor": "BuildCo", "location": "Mumbai", "project_manager": "Rajesh Kumar", "planned_duration_days": "144", "actual_duration_days": "200", "delay_days": "56", "overrun_pct": "38.9", "no_of_resources": "18", "budget_allocated": "42649737", "budget_spent": "46310345", "site_inspections_done": "6", "weather_issues": "No", "contractor_rating": "2.7", "permit_delays": "1", "design_changes": "2", "material_shortage": "No", "delay_risk": "High"}, {"project_id": "PRJ-1197", "project_type": "Mechanical", "contractor": "InfraPro", "location": "Mumbai", "project_manager": "Vikram Rao", "planned_duration_days": "239", "actual_duration_days": "239", "delay_days": "0", "overrun_pct": "0.0", "no_of_resources": "13", "budget_allocated": "17128662", "budget_spent": "18717701", "site_inspections_done": "10", "weather_issues": "No", "contractor_rating": "2.6", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Low"}, {"project_id": "PRJ-1198", "project_type": "Electrical", "contractor": "AlphaConst", "location": "Delhi", "project_manager": "Amit Singh", "planned_duration_days": "260", "actual_duration_days": "261", "delay_days": "1", "overrun_pct": "0.4", "no_of_resources": "20", "budget_allocated": "33711352", "budget_spent": "41248191", "site_inspections_done": "14", "weather_issues": "No", "contractor_rating": "3.8", "permit_delays": "0", "design_changes": "0", "material_shortage": "No", "delay_risk": "Low"}, {"project_id": "PRJ-1199", "project_type": "Electrical", "contractor": "InfraPro", "location": "Mumbai", "project_manager": "Rajesh Kumar", "planned_duration_days": "258", "actual_duration_days": "304", "delay_days": "46", "overrun_pct": "17.8", "no_of_resources": "39", "budget_allocated": "46331465", "budget_spent": "56479525", "site_inspections_done": "7", "weather_issues": "No", "contractor_rating": "3.0", "permit_delays": "1", "design_changes": "0", "material_shortage": "Yes", "delay_risk": "High"}, {"project_id": "PRJ-1200", "project_type": "Mechanical", "contractor": "BuildCo", "location": "Chennai", "project_manager": "Priya Sharma", "planned_duration_days": "319", "actual_duration_days": "323", "delay_days": "4", "overrun_pct": "1.3", "no_of_resources": "37", "budget_allocated": "28379169", "budget_spent": "35182375", "site_inspections_done": "15", "weather_issues": "No", "contractor_rating": "3.7", "permit_delays": "1", "design_changes": "0", "material_shortage": "No", "delay_risk": "Low"}];
+
+// ============ TABS ============
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ============ CHARTS ============
+const chartDefaults = {
+  plugins: { legend: { labels: { color: '#6b7280', font: { family: 'DM Sans' } } } },
+  scales: {}
+};
+const scaleDefaults = {
+  grid: { color: '#252a38' },
+  ticks: { color: '#6b7280', font: { family: 'DM Sans' } }
+};
+
+// Doughnut
+new Chart(document.getElementById('riskDoughnut'), {
+  type: 'doughnut',
+  data: {
+    labels: ['High Risk', 'Medium Risk', 'Low Risk'],
+    datasets: [{ data: [98, 78, 24], backgroundColor: ['#e8593a', '#f5a623', '#27c98f'], borderWidth: 0, hoverOffset: 6 }]
+  },
+  options: {
+    cutout: '65%',
+    plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', padding: 16, usePointStyle: true, font: { family: 'DM Sans', size: 12 } } } }
+  }
+});
+
+// Type bar
+const types = Object.keys(STATS.by_type);
+const typeDelayMap = { Civil: 52.8, Structural: 56.3, Mechanical: 58.6, Infrastructure: 43.8, Electrical: 52.1 };
+new Chart(document.getElementById('typeBar'), {
+  type: 'bar',
+  data: {
+    labels: types,
+    datasets: [{ label: 'Avg Delay (days)', data: types.map(t => typeDelayMap[t] || 0), backgroundColor: '#4a9eff', borderRadius: 6, borderSkipped: false }]
+  },
+  options: { plugins: { legend: { display: false } }, scales: { x: scaleDefaults, y: { ...scaleDefaults, beginAtZero: true } } }
+});
+
+// Delay histogram
+new Chart(document.getElementById('delayHist'), {
+  type: 'bar',
+  data: {
+    labels: Object.keys(STATS.delay_buckets),
+    datasets: [{ label: 'Projects', data: Object.values(STATS.delay_buckets), backgroundColor: ['#27c98f','#4a9eff','#f5a623','#e8593a','#c0392b'], borderRadius: 6, borderSkipped: false }]
+  },
+  options: { plugins: { legend: { display: false } }, scales: { x: scaleDefaults, y: { ...scaleDefaults, beginAtZero: true } } }
+});
+
+// Location bar
+const locs = Object.keys(STATS.location_avg_delay);
+const locVals = Object.values(STATS.location_avg_delay);
+new Chart(document.getElementById('locationBar'), {
+  type: 'bar',
+  data: {
+    labels: locs,
+    datasets: [{ label: 'Avg Delay (days)', data: locVals, backgroundColor: locVals.map(v => v < 45 ? '#27c98f' : v < 55 ? '#f5a623' : '#e8593a'), borderRadius: 6, borderSkipped: false }]
+  },
+  options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { ...scaleDefaults, beginAtZero: true }, y: scaleDefaults } }
+});
+
+// Contractor bar
+new Chart(document.getElementById('contractorBar'), {
+  type: 'bar',
+  data: {
+    labels: Object.keys(STATS.contractor_avg_delay),
+    datasets: [{ label: 'Avg Delay (days)', data: Object.values(STATS.contractor_avg_delay), backgroundColor: '#4a9eff', borderRadius: 6, borderSkipped: false }]
+  },
+  options: { plugins: { legend: { display: false } }, scales: { x: scaleDefaults, y: { ...scaleDefaults, beginAtZero: true } } }
+});
+
+// Stacked bar
+const stackTypes = Object.keys(STATS.by_type);
+new Chart(document.getElementById('stackedBar'), {
+  type: 'bar',
+  data: {
+    labels: stackTypes,
+    datasets: [
+      { label: 'High', data: stackTypes.map(t => STATS.by_type[t].High || 0), backgroundColor: '#e8593a', borderRadius: 2 },
+      { label: 'Medium', data: stackTypes.map(t => STATS.by_type[t].Medium || 0), backgroundColor: '#f5a623', borderRadius: 2 },
+      { label: 'Low', data: stackTypes.map(t => STATS.by_type[t].Low || 0), backgroundColor: '#27c98f', borderRadius: 2 }
+    ]
+  },
+  options: { plugins: { legend: { labels: { color: '#9ca3af', font: { family: 'DM Sans' } } } }, scales: { x: { ...scaleDefaults, stacked: true }, y: { ...scaleDefaults, stacked: true, beginAtZero: true } } }
+});
+
+// Radar
+new Chart(document.getElementById('factorRadar'), {
+  type: 'radar',
+  data: {
+    labels: ['Contractor Rating', 'Permit Delays', 'Material Shortage', 'Weather Issues', 'Low Resources', 'Design Changes', 'Low Inspections'],
+    datasets: [{ label: 'Impact Score', data: [85, 78, 72, 55, 60, 65, 48], backgroundColor: 'rgba(245,166,35,0.15)', borderColor: '#f5a623', pointBackgroundColor: '#f5a623', pointRadius: 4 }]
+  },
+  options: {
+    plugins: { legend: { display: false } },
+    scales: { r: { grid: { color: '#252a38' }, ticks: { display: false }, pointLabels: { color: '#9ca3af', font: { family: 'DM Sans', size: 12 } }, angleLines: { color: '#252a38' } } }
+  }
+});
+
+// ============ TABLE ============
+let filteredRows = [...ALL_ROWS];
+let currentPage = 1;
+const rowsPerPage = 15;
+let sortKey = '';
+let sortAsc = true;
+
+document.getElementById('searchBox').addEventListener('input', filterTable);
+
+function filterTable() {
+  const search = document.getElementById('searchBox').value.toLowerCase();
+  const risk = document.getElementById('riskFilter').value;
+  const type = document.getElementById('typeFilter').value;
+  filteredRows = ALL_ROWS.filter(r => {
+    const matchSearch = !search || Object.values(r).some(v => String(v).toLowerCase().includes(search));
+    const matchRisk = !risk || r.delay_risk === risk;
+    const matchType = !type || r.project_type === type;
+    return matchSearch && matchRisk && matchType;
+  });
+  currentPage = 1;
+  renderTable();
+}
+
+function sortTable(key) {
+  if (sortKey === key) sortAsc = !sortAsc;
+  else { sortKey = key; sortAsc = true; }
+  filteredRows.sort((a, b) => {
+    let av = isNaN(a[key]) ? a[key] : parseFloat(a[key]);
+    let bv = isNaN(b[key]) ? b[key] : parseFloat(b[key]);
+    return sortAsc ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
+  });
+  renderTable();
+}
+
+function renderTable() {
+  const start = (currentPage - 1) * rowsPerPage;
+  const pageRows = filteredRows.slice(start, start + rowsPerPage);
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = pageRows.map(r => `
+    <tr>
+      <td><span style="font-family:'DM Mono',monospace;color:var(--blue);font-size:12px;">${r.project_id}</span></td>
+      <td>${r.project_type}</td>
+      <td>${r.contractor}</td>
+      <td>${r.location}</td>
+      <td>${r.planned_duration_days}</td>
+      <td style="color:${parseInt(r.delay_days)>30?'var(--red)':parseInt(r.delay_days)>10?'var(--yellow)':'var(--green)'};font-weight:600;">${r.delay_days}</td>
+      <td>${r.overrun_pct}%</td>
+      <td>${r.contractor_rating} ⭐</td>
+      <td><span class="badge badge-${r.delay_risk}">${r.delay_risk}</span></td>
+    </tr>
+  `).join('');
+
+  const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+  document.getElementById('paginationInfo').textContent = `Showing ${start+1}–${Math.min(start+rowsPerPage, filteredRows.length)} of ${filteredRows.length} projects`;
+
+  const pageBtns = document.getElementById('pageBtns');
+  pageBtns.innerHTML = '';
+  const addBtn = (label, page, disabled, active) => {
+    const btn = document.createElement('button');
+    btn.className = 'page-btn' + (active ? ' active' : '');
+    btn.textContent = label;
+    btn.disabled = disabled;
+    btn.onclick = () => { currentPage = page; renderTable(); };
+    pageBtns.appendChild(btn);
+  };
+  addBtn('‹ Prev', currentPage - 1, currentPage === 1, false);
+  const start_ = Math.max(1, currentPage - 2);
+  const end_ = Math.min(totalPages, currentPage + 2);
+  for (let i = start_; i <= end_; i++) addBtn(i, i, false, i === currentPage);
+  addBtn('Next ›', currentPage + 1, currentPage === totalPages, false);
+}
+
+renderTable();
+
+// ============ PREDICTOR ============
+function predictRisk() {
+  const rating = parseFloat(document.getElementById('p_rating').value);
+  const resources = parseInt(document.getElementById('p_resources').value);
+  const inspections = parseInt(document.getElementById('p_inspections').value);
+  const permit = parseInt(document.getElementById('p_permit').value);
+  const design = parseInt(document.getElementById('p_design').value);
+  const weather = document.getElementById('p_weather').value;
+  const material = document.getElementById('p_material').value;
+
+  let score = 0;
+  const factors = [];
+
+  if (weather === 'Yes') { score += 2; factors.push({ name: 'Weather Issues', val: 2, max: 2 }); }
+  else factors.push({ name: 'Weather Issues', val: 0, max: 2 });
+
+  const rScore = rating < 2.5 ? 3 : rating < 3.5 ? 1 : 0;
+  score += rScore; factors.push({ name: 'Contractor Rating', val: 3 - rScore, max: 3 });
+
+  const resScore = resources < 10 ? 2 : resources < 20 ? 1 : 0;
+  score += resScore; factors.push({ name: 'Resource Adequacy', val: 2 - resScore, max: 2 });
+
+  const permScore = Math.min(permit * 2, 4);
+  score += permScore; factors.push({ name: 'Permit Delays', val: permScore, max: 4 });
+
+  const desScore = Math.min(design * 1.5, 3);
+  score += desScore; factors.push({ name: 'Design Changes', val: desScore, max: 3 });
+
+  const matScore = material === 'Yes' ? 2 : 0;
+  score += matScore; factors.push({ name: 'Material Shortage', val: matScore, max: 2 });
+
+  const insScore = inspections < 5 ? 1 : 0;
+  score += insScore; factors.push({ name: 'Site Inspections', val: 1 - insScore, max: 1 });
+
+  let risk, estDelay;
+  if (score <= 2) { risk = 'Low'; estDelay = Math.round(Math.random() * 10 + score * 2); }
+  else if (score <= 5) { risk = 'Medium'; estDelay = Math.round(10 + score * 5 + Math.random() * 10); }
+  else { risk = 'High'; estDelay = Math.round(45 + score * 5 + Math.random() * 20); }
+
+  const riskColors = { High: 'var(--red)', Medium: 'var(--yellow)', Low: 'var(--green)' };
+
+  document.getElementById('resultCard').innerHTML = `
+    <div style="text-align:center; margin-bottom:20px; width:100%;">
+      <div style="font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Predicted Delay Risk</div>
+      <div class="result-risk ${risk}">${risk}</div>
+      <div class="result-label">Risk Score: <strong>${score.toFixed(1)}/15</strong> &nbsp;|&nbsp; Est. Delay: <strong style="color:${riskColors[risk]}">${estDelay} days</strong></div>
+    </div>
+    <div class="result-factors" style="width:100%;">
+      <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">Factor Breakdown</div>
+      ${factors.map(f => `
+        <div class="factor-row">
+          <span style="width:160px; font-size:12px; color:var(--muted);">${f.name}</span>
+          <div class="factor-bar">
+            <div class="factor-fill" style="width:${(f.val/f.max)*100}%; background:${f.val/f.max > 0.6 ? 'var(--red)' : f.val/f.max > 0.3 ? 'var(--yellow)' : 'var(--green)'};"></div>
+          </div>
+          <span style="font-family:'DM Mono',monospace; font-size:12px; color:var(--text);">${f.val.toFixed(1)}/${f.max}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+// ============ EXPORT CSV ============
+function exportCSV() {
+  const headers = Object.keys(ALL_ROWS[0]);
+  const csv = [headers.join(','), ...ALL_ROWS.map(r => headers.map(h => r[h]).join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'pmc_project_delay_analysis.csv';
+  a.click();
+}
+</script>
+</body>
+</html>
